@@ -6,9 +6,6 @@ export GMX_MPI=OFF
 export GMX_THREAD_MPI=ON
 export GMXAPI=ON
 
-export CCACHE_DIR=$HOME/.ccache_gromacs
-ccache -s
-
 pushd $HOME
 [ -d gromacs-gmxapi ] || git clone --depth=1 --no-single-branch https://github.com/kassonlab/gromacs-gmxapi.git
 pushd gromacs-gmxapi
