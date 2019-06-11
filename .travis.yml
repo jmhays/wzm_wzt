@@ -4,17 +4,8 @@ language: python
 
 matrix:
   include:
-    # Extra includes for OSX since python language is not available by default on OSX
-    - os: osx
-      language: generic
-      env: PYTHON_VER=3.6
-    - os: osx
-      language: generic
-      env: PYTHON_VER=3.7
-
-
     - os: linux
-      language: generic  # No need to set Python version since its conda
+      language: generic
       env: PYTHON_VER=3.6
     - os: linux
       language: generic
@@ -52,6 +43,7 @@ install:
   - python devtools/scripts/create_conda_env.py -n=test -p=$PYTHON_VER devtools/conda-envs/test_env.yaml
     # Activate the test environment
   - conda activate test
+
     # Install gromacs
   - source devtools/travis-ci/install_gmx_2019.sh
     # Install gmxapi
