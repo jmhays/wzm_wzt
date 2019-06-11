@@ -35,5 +35,7 @@ conda config --set always_yes yes
 conda install conda conda-build jinja2 anaconda-client
 conda update --quiet --all
 
+# Add compilers
+
 # Restore original directory
 popd

@@ -16,6 +16,7 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     packages:
+    - g++-7
     - cmake
     - cmake-data
     - doxygen
@@ -26,6 +27,8 @@ addons:
     - libmpich-dev
     - libxml2-dev
     - mpich
+  env:
+    - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 before_install:
     # Additional info about the build
@@ -35,6 +38,7 @@ before_install:
 
     # Install the Python environment
   - source devtools/travis-ci/before_install.sh
+  - eval "${MATRIX_EVAL}"
   - python -V
 
 install:
