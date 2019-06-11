@@ -5,6 +5,7 @@ dependencies:
   - python
   - pip
 
+
     # Testing
   - pytest
   - pytest-cov
@@ -12,4 +13,10 @@ dependencies:
   # Pip-only installs
   - pip:
     - codecov
+    - numpy
+    - sphinx
+    - networkx
+    - setuptools
+    - cmake
+    - mpi4py
 

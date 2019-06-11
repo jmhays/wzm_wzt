@@ -5,30 +5,28 @@ Testing correlation structure calculations using ABC transporter Wzm-Wzt.
 Handles the primary functions
 """
 
-
-def canvas(with_attribution=True):
+def build_all_plugins(phase='training'):
     """
-    Placeholder function to show example docstring (NumPy format)
-
-    Replace this function and doc string for your own project
+    Builds all th plugins (six per distribution) for the Wzm-Wzt transporter data
 
     Parameters
     ----------
-    with_attribution : bool, Optional, default: True
-        Set whether or not to display who the quote is from
+    phase : str, Optional, default: 'training'
+        determines which set of plugins to build (phase of the BRER simulations)
 
     Returns
     -------
-    quote : str
-        Compiled string including quote and optional attribution
+    plugins : list
+        list of six plugin objects, all of which handle the training, convergence, or production
     """
 
-    quote = "The code is but a canvas to our imagination."
-    if with_attribution:
-        quote += "\n\t- Adapted from Henry David Thoreau"
+    if phase == 'training':
+        quote='training!'
+    else:
+        quote='not training!'
     return quote
 
 
 if __name__ == "__main__":
     # Do something if this file is invoked on its own
-    print(canvas())
+    print(build_all_plugins())
