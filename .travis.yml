@@ -5,10 +5,12 @@ language: python
 matrix:
   include:
     - os: linux
-      language: generic
+      language: cpp
+      compiler: gcc
       env: PYTHON_VER=3.6
     - os: linux
-      language: generic
+      language: cpp
+      compiler: gcc
       env: PYTHON_VER=3.7
 
 addons:
@@ -27,8 +29,6 @@ addons:
     - libmpich-dev
     - libxml2-dev
     - mpich
-  env:
-    - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 before_install:
     # Additional info about the build
@@ -36,9 +36,12 @@ before_install:
   - df -h
   - ulimit -a
 
+    # Set up compilers
+  - export CC=/usr/bin/gcc-7
+  - export CXX=/usr/bin/g++-7
+
     # Install the Python environment
   - source devtools/travis-ci/before_install.sh
-  - eval "${MATRIX_EVAL}"
   - python -V
 
 install:
