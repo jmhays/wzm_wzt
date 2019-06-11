@@ -1,8 +1,7 @@
-wzm_wzt
+Wzm-Wzt
 ==============================
 [//]: # (Badges)
-[![Travis Build Status](https://travis-ci.org/REPLACE_WITH_OWNER_ACCOUNT/wzm_wzt.png)](https://travis-ci.org/REPLACE_WITH_OWNER_ACCOUNT/wzm_wzt)
-[![codecov](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wzm_wzt/branch/master/graph/badge.svg)](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wzm_wzt/branch/master)
+[![Travis Build Status](https://travis-ci.com/jmhays/wzm_wzt.svg?branch=devel)](https://travis-ci.com/jmhays/wzm_wzt)
 
 Testing correlation structure calculations using ABC transporter Wzm-Wzt.
 
