@@ -15,6 +15,7 @@ dependencies:
     - codecov
     - numpy
     - sphinx
+    - sphinx_rtd_theme
     - networkx
     - setuptools
     - cmake
