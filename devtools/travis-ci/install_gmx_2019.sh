@@ -22,6 +22,7 @@ cmake ../ -DCMAKE_CXX_COMPILER=$CXX \
     -DGMXAPI=$GMXAPI \
     -DCMAKE_INSTALL_PREFIX=$HOME/install/gromacs-gmxapi
 make -j2 install
+source $HOME/install/gromacs-gmxapi/bin/GMXRC
 popd
 popd
 popd
