@@ -39,3 +39,10 @@ conda update --quiet --all
 
 # Restore original directory
 popd
+
+# Create test environment for package
+python devtools/scripts/create_conda_env.py -n=test -p=$PYTHON_VER devtools/conda-envs/test_env.yaml
+# Activate the test environment
+conda activate test
+export PYTHON=`which python`
+echo $PYTHON
