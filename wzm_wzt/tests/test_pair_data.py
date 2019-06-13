@@ -15,4 +15,3 @@ def test_pair_data_resample(raw_pair_data):
     pd = PairData()
     pd.set_from_dictionary(raw_pair_data)
     assert(isinstance(pd.re_sample(), float))
-    
