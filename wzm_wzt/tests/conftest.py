@@ -47,3 +47,19 @@ def raw_pair_data():
             6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9
         ]
     }
+
+
+@pytest.fixture()
+def general_parameter_defaults():
+    return {
+        'ensemble_num': 1,
+        'iteration': 0,
+        'phase': 'training',
+        'start_time': 0,
+        'A': 50,
+        'tau': 50,
+        'tolerance': 0.25,
+        'num_samples': 50,
+        'sample_period': 100,
+        'production_time': 10000  # 10 ns
+    }

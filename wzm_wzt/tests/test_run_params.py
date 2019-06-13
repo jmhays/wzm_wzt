@@ -9,23 +9,10 @@ import pytest
 import json
 
 
-def test_general_params():
+def test_general_params(general_parameter_defaults):
     gp = GeneralParams()
-
-    defaults_general = {
-            'ensemble_num': 1,
-            'iteration': 0,
-            'phase': 'training',
-            'start_time': 0,
-            'A': 50,
-            'tau': 50,
-            'tolerance': 0.25,
-            'num_samples': 50,
-            'sample_period': 100,
-            'production_time': 10000  # 10 ns
-        }
     
-    gp.set_from_dictionary(defaults_general)
+    gp.set_from_dictionary(general_parameter_defaults)
 
     assert(not gp.get_missing_keys()) # Make sure we don't have any missing parameters
 

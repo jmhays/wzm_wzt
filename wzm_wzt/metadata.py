@@ -32,6 +32,10 @@ class MetaData(ABC):
     def name(self):
         """ """
         return self.__name
+    
+    @name.setter
+    def name(self, name):
+        self.__name = name
 
     def set_requirements(self, list_of_requirements: list):
         """
