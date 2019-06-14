@@ -1,6 +1,4 @@
-"""
-Unit and regression test for the DirectoryHelper class.
-"""
+"""Unit and regression test for the DirectoryHelper class."""
 
 from wzm_wzt.directory_helper import DirectoryHelper
 import os
@@ -8,9 +6,11 @@ import pytest
 
 
 def test_directory(tmpdir):
-    """
-    Checks that directory creation for BRER runs is functional.
-    :param tmpdir: temporary pytest directory
+    """ Checks that directory creation for BRER runs is functional.
+    Parameters
+    ----------
+    tmpdir : str
+        temporary pytest directory
     """
     my_home = os.path.abspath(os.getcwd())
     top_dir = tmpdir.mkdir("top_directory")

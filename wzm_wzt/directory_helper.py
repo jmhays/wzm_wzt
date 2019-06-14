@@ -57,8 +57,7 @@ class DirectoryHelper:
         top_dir :
             the path to the directory containing all the ensemble members.
         param_dict :
-            a dictionary specifying the ensemble number, the iteration,
-            and the phase of the simulation.
+            a dictionary specifying the ensemble number, the iteration, the number of total test sites, the specific test site of interest, and the phase of the simulation.
 
         Returns
         -------

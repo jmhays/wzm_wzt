@@ -1,6 +1,4 @@
-"""
-Unit and regression test for the PairData class.
-"""
+"""Unit and regression test for the PairData class."""
 
 # Import package, test suite, and other packages as needed
 from wzm_wzt.pair_data import PairData
