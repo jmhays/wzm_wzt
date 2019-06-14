@@ -41,3 +41,7 @@ def test_build_plugins(general_parameter_defaults, raw_pair_data):
     ppc.scan_dictionary(general_parameter_defaults)
     ppc.scan_dictionary(pair_param_dict)
     assert not ppc.get_missing_keys()
+
+    tpc.build_plugin()
+    cpc.build_plugin()
+    ppc.build_plugin()
