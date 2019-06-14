@@ -13,9 +13,9 @@ class GmxapiConfig(MetaData):
         self.name = 'gmxapi_config'
         self.set_requirements(['tpr', 'ensemble_dir', 'ensemble_num', 'pairs_json'])
 
-    # def get_workflow(self):
-    #     assert (not self.get_missing_keys())
-    #     return gmx.workflow.from_tpr(self.get('tpr'), append_output=False)
+    def get_workflow(self):
+        assert (not self.get_missing_keys())
+        return gmx.workflow.from_tpr(self.get('tpr'), append_output=False)
 
 
 # class RunTestSites:

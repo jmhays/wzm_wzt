@@ -13,3 +13,5 @@ def test_gmxapi_config(data_dir, tmpdir):
     gmx_config = GmxapiConfig()
     gmx_config.set_from_dictionary(gmx_config_defaults)
     assert not gmx_config.get_missing_keys()
+
+    gmx_config.get_workflow()
