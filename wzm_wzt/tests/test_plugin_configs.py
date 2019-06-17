@@ -31,14 +31,17 @@ def test_build_plugins(general_parameter_defaults, raw_pair_data):
     pair_param_dict = {'logging_filename': '{}.log'.format(site_name), 'target': 3.0, 'sites': sites, 'alpha': 100.}
 
     tpc.scan_dictionary(general_parameter_defaults)
+    pair_param_dict['phase'] = 'training'
     tpc.scan_dictionary(pair_param_dict)
     assert not tpc.get_missing_keys()
 
     cpc.scan_dictionary(general_parameter_defaults)
+    pair_param_dict['phase'] = 'convergence'
     cpc.scan_dictionary(pair_param_dict)
     assert not cpc.get_missing_keys()
 
     ppc.scan_dictionary(general_parameter_defaults)
+    pair_param_dict['phase'] = 'production'
     ppc.scan_dictionary(pair_param_dict)
     assert not ppc.get_missing_keys()
 

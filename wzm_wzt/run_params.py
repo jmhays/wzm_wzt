@@ -22,7 +22,7 @@ class GeneralParams(MetaData):
     def __init__(self):
         super().__init__('general')
         self.set_requirements([
-            'ensemble_num', 'iteration', 'phase', 'start_time', 'A', 'tau', 'tolerance', 'num_samples',
+            'ensemble_num', 'iteration', 'start_time', 'A', 'tau', 'tolerance', 'num_samples',
             'sample_period', 'production_time'
         ])
 
@@ -32,7 +32,8 @@ class PairParams(MetaData):
 
     def __init__(self, name):
         super().__init__(name)
-        self.set_requirements(['sites', 'logging_filename', 'alpha', 'target'])
+        self.set_requirements(['sites', 'phase', 'logging_filename', 'alpha', 'target'])
+        self.set('phase', 'training') 
 
 
 class RunParams:
@@ -47,7 +48,6 @@ class RunParams:
         self.__defaults_general = {
             'ensemble_num': 1,
             'iteration': 0,
-            'phase': 'training',
             'start_time': 0,
             'A': 50,
             'tau': 50,
