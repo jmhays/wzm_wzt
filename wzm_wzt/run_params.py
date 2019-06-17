@@ -4,7 +4,6 @@ Class that handles the simulation data for Wzm-Wzt simulations
 """
 from wzm_wzt.metadata import MetaData, site_to_str
 from wzm_wzt.experimental_data import ExperimentalData
-import json
 
 
 class GeneralParams(MetaData):

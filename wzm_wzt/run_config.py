@@ -4,8 +4,8 @@ Wzm-Wzt BRER."""
 import gmx
 # from wzm_wzt.run_params import RunParams
 from wzm_wzt.metadata import MetaData
-from wzm_wzt.directory_helper import DirectoryHelper
-from wzm_wzt.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig, ProductionPluginConfig
+#from wzm_wzt.directory_helper import DirectoryHelper
+#from wzm_wzt.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig, ProductionPluginConfig
 
 
 class gmxapiConfig(MetaData):

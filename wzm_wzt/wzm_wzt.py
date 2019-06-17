@@ -5,8 +5,6 @@ Testing correlation structure calculations using ABC transporter Wzm-Wzt.
 Handles the primary functions
 """
 
-import gmx
-
 tpr_filename = '/home/jennifer/wzmwzt/tests/wzmwzt.tpr'
 
 if __name__ == "__main__":
