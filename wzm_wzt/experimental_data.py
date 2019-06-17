@@ -6,23 +6,23 @@ from wzm_wzt.metadata import MetaData
 import json
 
 
-class PairData(MetaData):
+class ExperimentalData(MetaData):
     """Stores Wzm-Wzt convolved distributions.
 
     Resamples from the single convolved distribution.
     """
 
-    def __init__(self, name='pd'):
+    def __init__(self, name='ed'):
         super().__init__(name=name)
-        self.set_requirements(['distribution', 'bins', 'sites'])
+        self.set_requirements(['distribution', 'bins', 'name', 'sigma'])
 
-    def load_from_json(self, filename='pair_data.json'):
+    def load_from_json(self, filename='deer_data.json'):
         """Loads DEER distribution metadata from json.
 
         Parameters
         ----------
         filename : str, optional
-            DEER metadata: see the data directory for an example json, by default 'pair_data.json'
+            DEER metadata: see the data directory for an example json, by default 'deer_data.json'
         """
         data = json.load(open(filename))
         self.set_from_dictionary(data)

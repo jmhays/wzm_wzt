@@ -5,6 +5,9 @@ from abc import ABC
 import json
 
 
+def site_to_str(site):
+    return "_".join([str(x) for x in site])
+
 class MetaData(ABC):
 
     def __init__(self, name):
@@ -55,7 +58,7 @@ class MetaData(ABC):
         """ """
         return self.__required_parameters
 
-    def set(self, key, value):
+    def set(self, key=None, value=None, **kwargs):
         """
 
         Parameters
@@ -69,7 +72,14 @@ class MetaData(ABC):
         -------
 
         """
-        self._metadata[key] = value
+
+        if key and value:
+            self._metadata[key] = value
+
+        else:
+            for key in kwargs:
+                if key in self.__required_parameters:
+                    self._metadata[key] = kwargs[key]
 
     def get(self, key):
         """

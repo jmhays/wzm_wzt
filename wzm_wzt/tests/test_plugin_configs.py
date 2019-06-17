@@ -2,13 +2,14 @@
 
 # Import package, test suite, and other packages as needed
 import pytest
-from wzm_wzt.pair_data import PairData
+from wzm_wzt.metadata import site_to_str
+from wzm_wzt.experimental_data import ExperimentalData
 from wzm_wzt.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig, ProductionPluginConfig
 import json
 import os
 
 
-def test_build_plugins(general_parameter_defaults, raw_pair_data):
+def test_build_plugins(general_parameter_defaults, sites):
     """Build all three test plugins and check that they have all the required
     data to run.
 
@@ -24,24 +25,23 @@ def test_build_plugins(general_parameter_defaults, raw_pair_data):
     ppc = ProductionPluginConfig()
 
     # Pick one site for testing plugins
-    sites = raw_pair_data['sites']
-    sites = sites[0]
-    site_name = '_'.join([str(x) for x in sites])
+    sites = sites['sites']
+    site_name = list(sites.keys())[0]
 
-    pair_param_dict = {'logging_filename': '{}.log'.format(site_name), 'target': 3.0, 'sites': sites, 'alpha': 100.}
+    pair_param_dict = {"logging_filename": "{}.log".format(site_name), "target": 3.0, "sites": sites[site_name], "alpha": 100.}
 
     tpc.scan_dictionary(general_parameter_defaults)
-    pair_param_dict['phase'] = 'training'
+    pair_param_dict["phase"] = "training"
     tpc.scan_dictionary(pair_param_dict)
     assert not tpc.get_missing_keys()
 
     cpc.scan_dictionary(general_parameter_defaults)
-    pair_param_dict['phase'] = 'convergence'
+    pair_param_dict["phase"] = "convergence"
     cpc.scan_dictionary(pair_param_dict)
     assert not cpc.get_missing_keys()
 
     ppc.scan_dictionary(general_parameter_defaults)
-    pair_param_dict['phase'] = 'production'
+    pair_param_dict["phase"] = "production"
     ppc.scan_dictionary(pair_param_dict)
     assert not ppc.get_missing_keys()
 

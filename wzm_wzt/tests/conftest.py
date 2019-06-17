@@ -4,18 +4,17 @@ import os
 
 @pytest.fixture()
 def data_dir():
-    parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    return '{}/data'.format(parent_dir)
+    parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return "{}/data".format(parent_dir)
 
 
 @pytest.fixture()
-def raw_pair_data():
+def raw_deer_data():
     """
     Three DEER distributions for testing purposes.
     :return:
     """
     return {
-        "sites": [[3673, 5636], [3673, 10088], [3673, 12035], [5636, 10088], [5636, 12035], [10088, 12035]],
         "name":
         "228_349",
         "sigma":
@@ -52,14 +51,27 @@ def raw_pair_data():
 @pytest.fixture()
 def general_parameter_defaults():
     return {
-        'ensemble_num': 1,
-        'iteration': 0,
-        'phase': 'training',
-        'start_time': 0,
-        'A': 50,
-        'tau': 50,
-        'tolerance': 0.25,
-        'num_samples': 50,
-        'sample_period': 100,
-        'production_time': 10000  # 10 ns
+        "ensemble_num": 1,
+        "iteration": 0,
+        "start_time": 0,
+        "A": 50,
+        "tau": 50,
+        "tolerance": 0.25,
+        "num_samples": 50,
+        "sample_period": 100,
+        "production_time": 10000  # 10 ns
+    }
+
+
+@pytest.fixture()
+def sites():
+    return {
+        "sites": {
+            "3673_5636": [3673, 5636],
+            "3673_10088": [3673, 10088],
+            "3673_12035": [3673, 12035],
+            "5636_10088": [5636, 10088],
+            "5636_12035": [5636, 12035],
+            "10088_12035": [10088, 12035]
+        }
     }
