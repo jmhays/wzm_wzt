@@ -25,8 +25,12 @@ class PluginConfig(MetaData):
         Returns
         -------
         """
+        print("Dictionary keys {}".format(dictionary.keys()))
+
         for requirement in self.get_requirements():
+            print(requirement)
             if requirement in dictionary.keys():
+                print("Found requirement {}".format(requirement))
                 self.set(requirement, dictionary[requirement])
 
     def scan_metadata(self, data):

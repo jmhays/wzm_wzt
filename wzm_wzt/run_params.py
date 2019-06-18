@@ -112,12 +112,13 @@ class State(MetaData):
         self.set_requirements(["general_parameters", "pair_parameters"])
         self.general_params = None
         self.pair_params = {}
+        self.test_sites = []
         self.json = filename
 
     def set(self, site_name=None, **kwargs):
         for key, value in kwargs.items():
-            if key in self.general_parameters.get_requirements():
-                self.general_parameters.set(key, value)
+            if key in self.general_params.get_requirements():
+                self.general_params.set(key, value)
                 self._metadata["general_parameters"][key] = value
             elif site_name:
                 self.pair_params[site_name].set(key, value)
@@ -126,10 +127,20 @@ class State(MetaData):
                 raise KeyError(
                     "You are trying to set a pair-specific parameter {} without providing the pair name".format(key))
 
+    def get(self, key, site_name=None):
+        if key in self.general_params.get_requirements():
+            answer = self.general_params.get(key)
+        elif site_name:
+            answer = self.pair_params[site_name].get(key)
+        else:
+            raise KeyError(
+                "You are trying to get a pair-specific parameter {} without providing the pair name".format(key))
+        return answer
+
     def import_general_parameters(self, general_parameters: GeneralParams):
         if general_parameters.get_missing_keys():
             raise Warning("You are trying to import an incomplete set of general parameters")
-        self.general_parameters = general_parameters
+        self.general_params = general_parameters
         self._metadata["general_parameters"] = general_parameters.get_as_dictionary()
 
     def import_pair_parameters(self, pair_parameters: PairParams):
@@ -142,11 +153,24 @@ class State(MetaData):
         self.pair_params[pair_parameters.name] = pair_parameters
         self._metadata["pair_parameters"][pair_parameters.name] = pair_parameters.get_as_dictionary()
 
+        # Update the list of test_sites
+        for site_name in self.pair_params:
+            if self.pair_params[site_name].get("testing"):
+                self.test_sites.append(site_name)
+
     def write_to_json(self):
         backup_file(self.json, 'copy')
         json.dump(self.get_as_dictionary(), open(self.json, "w"))
 
     def new_iteration(self):
-        self.set(iteration=(self.get("general_parameters").get("iteration") + 1), start_time=0.)
+        self.set(iteration=(self._metadata["general_parameters"]["iteration"] + 1), start_time=0.)
         for site_name in self.pair_params:
             self.pair_params[site_name].set_to_defaults()
+
+    def set_from_dictionary(self, dictionary):
+        self._metadata = dictionary
+        self.general_params = GeneralParams()
+        self.general_params.set_from_dictionary(self._metadata["general_parameters"])
+        for name in self._metadata["pair_parameters"]:
+            self.pair_params[name] = PairParams(name)
+            self.pair_params[name].set_from_dictionary(self._metadata["pair_parameters"][name])

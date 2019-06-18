@@ -5,8 +5,6 @@ Testing correlation structure calculations using ABC transporter Wzm-Wzt.
 Handles the primary functions
 """
 
-tpr_filename = '/home/jennifer/wzmwzt/tests/wzmwzt.tpr'
-
 if __name__ == "__main__":
     # Do something if this file is invoked on its own
     print("Hello")

@@ -37,7 +37,7 @@ def test_state(raw_deer_data, sites, tmpdir):
     gp.load_experimental_data(experimental_data)
     gp.set_to_defaults()
     
-    state = State(filename="{}/state.json".format(tmpdir))
+    state = State(filename="{}/state.json".format(os.getcwd()))
     state.import_general_parameters(gp)
 
     if "sites" in sites:
@@ -49,7 +49,7 @@ def test_state(raw_deer_data, sites, tmpdir):
         state.import_pair_parameters(pair_param)
     
     assert not state.get_missing_keys()
-    assert not state.general_parameters.get_missing_keys()
+    assert not state.general_params.get_missing_keys()
     for name in state.pair_params:
         assert not state.pair_params[name].get_missing_keys()
     
