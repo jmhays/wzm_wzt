@@ -8,6 +8,31 @@ import json
 def site_to_str(site):
     return "_".join([str(x) for x in site])
 
+def backup_file(file_spec, vtype='copy'):
+    import os, shutil
+    if os.path.isfile(file_spec):
+        if vtype not in ['copy', 'rename']:
+            vtype = 'copy'
+        # Determine root filename so the extension doesn't get longer
+        n, e = os.path.splitext(file_spec)
+        # Is e an integer?
+        try:
+             num = int(e)
+             root = n
+        except ValueError:
+             root = file_spec
+
+        # Find next available file version
+        for i in range(1000):
+             new_file = '{}.{}'.format(root, i)
+             if not os.path.isfile(new_file):
+                  if vtype == 'copy':
+                      shutil.copy(file_spec, new_file)
+                  else:
+                      os.rename(file_spec, new_file)
+                  return 1
+    return 0
+
 class MetaData(ABC):
 
     def __init__(self, name):
