@@ -2,6 +2,7 @@
 Wzm-Wzt BRER."""
 
 import gmx
+import os
 from wzm_wzt.run_params import State
 from wzm_wzt.metadata import MetaData
 from wzm_wzt.directory_helper import DirectoryHelper
@@ -17,7 +18,7 @@ class gmxapiConfig(MetaData):
 
     def initialize(self, state: State):
         self.state = state
-        self.set(test_sites = [])
+        self.set(test_sites=[])
 
         # Now that we've defined a state, we can calculate the number of test sites and set up the workflow
         for site_name in self.state.pair_params:
@@ -68,18 +69,13 @@ class gmxapiConfig(MetaData):
                 self.state.pair_params[name].set(on=False)
 
             if pair_parameters.get("on"):
-                #print(self.state.pair_params[name].get("alpha"))
-                #print(self.state.pair_params[name].get_as_dictionary())
-                #print(plugin.get_as_dictionary())
                 plugin.scan_metadata(self.state.general_params)
-                #print(plugin.get_as_dictionary())
-                #print(plugin.get_as_dictionary())
-                #print(plugin.get_missing_keys())
-                #self.workflow.add_dependency(plugin.build_plugin())
+                plugin.scan_metadata(self.state.pair_params[name])
+                assert not plugin.get_missing_keys()
+                self.workflow.add_dependency(plugin.build_plugin())
 
     def run(self):
-        gmx.run(self.workflow)
-
+        gmx.run(work=self.workflow)
     # TODO: once gmxapi enables assignment of an array of plugins to an array of simulations, we can use this code to run test sites in parallel
     # def build_plugins(self):
     #     """

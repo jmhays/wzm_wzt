@@ -10,8 +10,10 @@ import gmx
 class PluginConfig(MetaData):
     def __init__(self):
         super().__init__('build_plugin')
+
     def set_name(self, name):
         self.name = name
+
     def scan_dictionary(self, dictionary):
         """Scans a dictionary and stores whatever parameters it needs for the
         build_plugin.
@@ -25,13 +27,9 @@ class PluginConfig(MetaData):
         Returns
         -------
         """
-        print("Dictionary keys {}".format(dictionary.keys()))
-
         for requirement in self.get_requirements():
-            print(requirement)
             if requirement in dictionary.keys():
-                print("Found requirement {}".format(requirement))
-                self.set(requirement, dictionary[requirement])
+                self._metadata[requirement] = dictionary[requirement]
 
     def scan_metadata(self, data):
         """This scans either a RunParams or PairData obj and stores whatever
