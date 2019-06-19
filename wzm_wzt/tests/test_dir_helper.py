@@ -39,6 +39,9 @@ def test_directory(tmpdir):
     dir_helper.change_dir('iteration')
     assert (os.getcwd() == '{}/mem_{}/{}'.format(top_dir, 1, 0))
     dir_helper.change_dir('test_site')
-    assert (os.getcwd() == '{}/mem_{}/{}/num_test_sites_{}/{}'.format(top_dir, 1, 0, 6, '3673_5636', 'training'))
+    assert (os.getcwd() == '{}/mem_{}/{}/num_test_sites_{}/{}'.format(top_dir, 1, 0, 6, '3673_5636'))
+
+    with pytest.raises(ValueError):
+        assert dir_helper.change_dir("bad_dir")
   
     os.chdir(my_home)
