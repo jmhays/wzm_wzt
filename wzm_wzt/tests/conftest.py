@@ -246,12 +246,12 @@ def state_dict():
         "ensemble_num": 1,
         "iteration": 0,
         "start_time": 0,
-        "A": 50,
-        "tau": 50,
-        "tolerance": 0.25,
-        "num_samples": 50,
-        "sample_period": 100,
-        "production_time": 10000
+        "A": 5,
+        "tau": 0.1,
+        "tolerance": 100.0,
+        "num_samples": 2,
+        "sample_period": 0.1,
+        "production_time": 0.2
     },
     "pair_parameters": {
         "3673_5636": {
