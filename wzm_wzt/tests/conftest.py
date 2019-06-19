@@ -247,10 +247,10 @@ def state_dict():
         "iteration": 0,
         "start_time": 0,
         "A": 5,
-        "tau": 0.1,
+        "tau": 0.01,
         "tolerance": 100.0,
         "num_samples": 2,
-        "sample_period": 0.1,
+        "sample_period": 0.01,
         "production_time": 0.2
     },
     "pair_parameters": {

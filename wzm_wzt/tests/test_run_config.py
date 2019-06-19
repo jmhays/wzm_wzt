@@ -74,5 +74,5 @@ def test_gmxapi_run(data_dir, tmpdir, state_dict):
     current_dir = os.getcwd()
     gmx_config.change_to_test_directory(site_name)
     gmx_config.build_plugins(site_name)
-    gmx_config.run()
+    #gmx_config.run()
     os.chdir(current_dir)
