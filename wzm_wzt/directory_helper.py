@@ -66,7 +66,7 @@ class DirectoryHelper:
         self._required_parameters = ['ensemble_num', 'iteration', 'num_test_sites', 'test_site', 'phase']
         for required in self._required_parameters:
             if required not in param_dict:
-                raise ValueError('Must define {}'.format(required))
+                raise KeyError('Must define {}'.format(required))
         self._param_dict = param_dict
 
     def get_dir(self, level):
