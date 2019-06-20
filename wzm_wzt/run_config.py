@@ -12,7 +12,7 @@ from wzm_wzt.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig
 
 class gmxapiConfig(MetaData):
     def __init__(self):
-        self.name = "gmxapi_config"
+        super().__init__("gmxapi_config")
         self.set_requirements(["tpr", "ensemble_dir", "ensemble_num", "test_sites"])
         self.workflow = None
         self.state = None

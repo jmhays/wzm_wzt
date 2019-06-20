@@ -115,6 +115,7 @@ class State(MetaData):
         self.pair_params = {}
         self.test_sites = []
         self.json = filename
+        self.names = []
 
     def set(self, site_name=None, **kwargs):
         for key, value in kwargs.items():
@@ -139,8 +140,13 @@ class State(MetaData):
         return answer
 
     def import_general_parameters(self, general_parameters: GeneralParams):
+        incomp_warn = "You are trying to import an incomplete set of parameters: missing"
         if general_parameters.get_missing_keys():
-            warnings.warn("You are trying to import an incomplete set of general parameters")
+            warnings.warn("{} {}".format(incomp_warn, general_parameters.get_missing_keys()))
+        if not general_parameters.get("distribution"):
+            warnings.warn("{} distribution".format(incomp_warn))
+        if not general_parameters.get("bins"):
+            warnings.warn("{} bins".format(incomp_warn))
         self.general_params = general_parameters
         self._metadata["general_parameters"] = general_parameters.get_as_dictionary()
 
@@ -158,6 +164,7 @@ class State(MetaData):
         for site_name in self.pair_params:
             if self.pair_params[site_name].get("testing"):
                 self.test_sites.append(site_name)
+            self.names.append(site_name)
 
     def write_to_json(self):
         backup_file(self.json, 'copy')
@@ -173,5 +180,20 @@ class State(MetaData):
         self.general_params = GeneralParams()
         self.general_params.set_from_dictionary(self._metadata["general_parameters"])
         for name in self._metadata["pair_parameters"]:
+            self.names.append(name)
             self.pair_params[name] = PairParams(name)
             self.pair_params[name].set_from_dictionary(self._metadata["pair_parameters"][name])
+
+    def load_from_json(self, fnm='state.json'):
+        self.set_from_dictionary(json.load(open(fnm)))
+    
+    def get_all_missing_keys(self):
+        missing = []
+        for miss in self.get_missing_keys():
+            missing.append(miss)
+        for miss in self.general_params.get_missing_keys():
+            missing.append(miss)
+        for name in self.pair_params.keys():
+            for miss in self.pair_params[name].get_missing_keys():
+                missing.append(miss)
+        return missing
