@@ -2,7 +2,7 @@
 Wzm-Wzt BRER."""
 
 import gmx
-import os
+import os, shutil
 import warnings
 from wzm_wzt.run_params import State
 from wzm_wzt.metadata import MetaData
@@ -16,6 +16,7 @@ class gmxapiConfig(MetaData):
         self.set_requirements(["tpr", "ensemble_dir", "ensemble_num", "test_sites"])
         self.workflow = None
         self.state = None
+        self.helper = None
 
     def initialize(self, state: State):
         self.state = state
@@ -48,9 +49,37 @@ class gmxapiConfig(MetaData):
             'test_site': site_name,
             'phase': self.state.get("phase", site_name)
         }
-        directory_helper = DirectoryHelper(top_dir=self.get("ensemble_dir"), param_dict=dir_helper_params)
-        directory_helper.build_working_dir()
-        directory_helper.change_dir(level="phase")
+        self.helper = DirectoryHelper(top_dir=self.get("ensemble_dir"), param_dict=dir_helper_params)
+        self.helper.build_working_dir()
+        self.helper.change_dir(level="phase")
+
+    def move_cpt(self, site_name):
+        current_iter = self.state.get('iteration')
+        phase = self.state.get('phase', site_name=site_name)
+
+        # If the cpt already exists, don't overwrite it
+        if os.path.exists("{}/state.cpt".format(self.helper.get_dir('phase'))):
+            print("Phase is {} and state.cpt already exists: not moving any files".format(phase))
+
+        else:
+            member_dir = self.helper.get_dir('ensemble_num')
+            prev_iter = current_iter - 1
+            prev_num_test_sites = self.helper._param_dict["num_test_sites"] + 1
+
+            if phase in ['training', 'convergence']:
+                if prev_iter > -1:
+                    # Get the production cpt from previous iteration
+                    gmx_cpt = '{}/{}/num_test_sites_{}/{}/production/state.cpt'.format(
+                        member_dir, prev_iter, prev_num_test_sites, site_name)
+                    shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
+
+                else:
+                    pass  # Do nothing
+
+            else:
+                # Get the convergence cpt from current iteration
+                gmx_cpt = '{}/{}/convergence/state.cpt'.format(member_dir, current_iter)
+                shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
 
     def build_plugins(self, site_name):
         all_pair_params = self.state.pair_params
@@ -77,7 +106,7 @@ class gmxapiConfig(MetaData):
                 if self.state.pair_params[name].get("on"):
                     warnings.warn(
                         "The state file indicates that pair {} is on; turning off this plugin. If you did not intend to do this, kill the simulation!"
-                        .format(name))                    
+                        .format(name))
                 self.state.pair_params[name].set(on=False)
 
             if pair_parameters.get("on"):
@@ -85,6 +114,9 @@ class gmxapiConfig(MetaData):
                 plugin.scan_metadata(self.state.pair_params[name])
                 assert not plugin.get_missing_keys()
                 self.workflow.add_dependency(plugin.build_plugin())
+
+    def clean_plugins(self):
+        self.workflow = gmx.workflow.from_tpr(self.get("tpr"), append_output=False)
 
     def run(self):
         gmx.run(work=self.workflow)

@@ -47,7 +47,7 @@ How the directory structure is organized:
 import os
 
 
-class DirectoryHelper:
+class DirectoryHelper():
     def __init__(self, top_dir, param_dict):
         """Small class for manipulating a standard directory structure for BRER
         runs.

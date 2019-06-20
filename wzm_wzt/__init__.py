@@ -4,7 +4,7 @@ Testing correlation structure calculations using ABC transporter Wzm-Wzt.
 """
 
 # Add imports here
-from wzm_wzt import directory_helper, experimental_data, metadata, plugin_configs, run_config, run_params
+import wzm_wzt # import directory_helper, experimental_data, metadata, plugin_configs, run_config, run_params
 
 # Handle versioneer
 from ._version import get_versions
