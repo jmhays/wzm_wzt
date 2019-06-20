@@ -2,7 +2,6 @@
 Abstract class for handling all BRER metadata. State and PairData classes inherit from this class.
 """
 from abc import ABC
-import json
 
 
 def site_to_str(site):
