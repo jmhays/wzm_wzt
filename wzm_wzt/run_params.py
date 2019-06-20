@@ -4,6 +4,7 @@
 """
 from wzm_wzt.metadata import MetaData, site_to_str, backup_file
 from wzm_wzt.experimental_data import ExperimentalData
+import warnings
 import json
 import os
 
@@ -139,17 +140,17 @@ class State(MetaData):
 
     def import_general_parameters(self, general_parameters: GeneralParams):
         if general_parameters.get_missing_keys():
-            raise Warning("You are trying to import an incomplete set of general parameters")
+            warnings.warn("You are trying to import an incomplete set of general parameters")
         self.general_params = general_parameters
         self._metadata["general_parameters"] = general_parameters.get_as_dictionary()
 
     def import_pair_parameters(self, pair_parameters: PairParams):
         if pair_parameters.get_missing_keys():
-            raise Warning("You are trying to import an incomplete set of pair parameters")
+            warnings.warn("You are trying to import an incomplete set of pair parameters")
         if "pair_parameters" not in self._metadata:
             self._metadata["pair_parameters"] = {}
         if pair_parameters.name in self.pair_params:
-            raise Warning("You are about to overwrite the pair {}".format(pair_parameters.name))
+            warnings.warn("You are about to overwrite the pair {}".format(pair_parameters.name))
         self.pair_params[pair_parameters.name] = pair_parameters
         self._metadata["pair_parameters"][pair_parameters.name] = pair_parameters.get_as_dictionary()
 

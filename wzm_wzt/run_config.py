@@ -3,6 +3,7 @@ Wzm-Wzt BRER."""
 
 import gmx
 import os
+import warnings
 from wzm_wzt.run_params import State
 from wzm_wzt.metadata import MetaData
 from wzm_wzt.directory_helper import DirectoryHelper
@@ -56,16 +57,27 @@ class gmxapiConfig(MetaData):
 
         for name in all_pair_params:
             pair_parameters = all_pair_params[name]
-            # Are we restraining this pair?
+            # If the pair is being restrained but is not part of the testing, then it should be restrained by linear potential.
             if pair_parameters.get("on") and not pair_parameters.get("testing"):
+                assert pair_parameters.get("phase") == "production"
                 plugin = ProductionPluginConfig()
+
+            # Otherwise, if the pair is being restrained and is the pair being "tested," we need to check the phase.
             elif name == site_name and pair_parameters.get("testing"):
                 if pair_parameters.get("phase") == "training":
                     plugin = TrainingPluginConfig()
                 else:
                     plugin = ConvergencePluginConfig()
+                if not self.state.pair_params[name].get("on"):
+                    warnings.warn(
+                        "The state file indicates that pair {} is not on; turning on this plugin. If you did not intend to do this, kill the simulation!"
+                        .format(name))
                 self.state.pair_params[name].set(on=True)
             else:
+                if self.state.pair_params[name].get("on"):
+                    warnings.warn(
+                        "The state file indicates that pair {} is on; turning off this plugin. If you did not intend to do this, kill the simulation!"
+                        .format(name))                    
                 self.state.pair_params[name].set(on=False)
 
             if pair_parameters.get("on"):
@@ -76,6 +88,7 @@ class gmxapiConfig(MetaData):
 
     def run(self):
         gmx.run(work=self.workflow)
+
     # TODO: once gmxapi enables assignment of an array of plugins to an array of simulations, we can use this code to run test sites in parallel
     # def build_plugins(self):
     #     """

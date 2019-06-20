@@ -27,7 +27,9 @@ def test_gmxapi_config_1(data_dir, tmpdir, state_dict):
 
     site_name = '3673_5636'
     gmx_config.change_to_test_directory(site_name)
-    gmx_config.build_plugins(site_name)
+    with pytest.warns(Warning):
+        gmx_config.build_plugins(site_name)
+
 
 def test_gmxapi_config_2(data_dir, tmpdir, state_dict):
     gmx_config_defaults = {'tpr': '{}/wzmwzt.tpr'.format(data_dir), 'ensemble_dir': tmpdir, 'ensemble_num': 0}
@@ -51,7 +53,9 @@ def test_gmxapi_config_2(data_dir, tmpdir, state_dict):
     site_name = '3673_5636'
     gmx_config.state.pair_params[site_name].set(phase="convergence")
     gmx_config.change_to_test_directory(site_name)
-    gmx_config.build_plugins(site_name)
+    with pytest.warns(Warning):
+        gmx_config.build_plugins(site_name)
+
 
 def test_gmxapi_run(data_dir, tmpdir, state_dict):
     gmx_config_defaults = {'tpr': '{}/wzmwzt.tpr'.format(data_dir), 'ensemble_dir': tmpdir, 'ensemble_num': 0}
@@ -70,9 +74,10 @@ def test_gmxapi_run(data_dir, tmpdir, state_dict):
     gmx_config.initialize(state)
     assert not gmx_config.state.get_missing_keys()
 
-    site_name = '3673_5636' 
+    site_name = '3673_5636'
     current_dir = os.getcwd()
     gmx_config.change_to_test_directory(site_name)
-    gmx_config.build_plugins(site_name)
+    with pytest.warns(Warning):
+        gmx_config.build_plugins(site_name)
     #gmx_config.run()
     os.chdir(current_dir)
