@@ -53,34 +53,19 @@ class Simulation():
 
         gmxapi_config = gmxapiConfig()
         gmxapi_config.set_from_dictionary(gmx_config_parameters)
-        gmxapi_config.initialize(state)
+        gmxapi_config.load_state(state)
 
         self.gmxapi = gmxapi_config
         self.gmxapi.state.write_to_json()
 
-        self.__current_test = None
         self.__finished_tests = None
-
-    def set_current_test_site(self, site_name):
-        self.__current_test = site_name
-        self.gmxapi.state.set(site_name=site_name, on=True)
 
     def build_plugins(self, clean=False):
         if clean:
             self.gmxapi.clean_plugins()
-
-        self.gmxapi.build_plugins(self.__current_test)
-
-    def __setup_next_round(self):
-        current = self.__current_test
-        phase = self.gmxapi.state.get("phase", site_name=current)
-        if phase == "training":
-            self.gmxapi.state.set(phase="convergence", site_name=current)
-        if phase == "convergence":
-            self.gmxapi.state.set(phase="production", on=True, testing=False, site_name=current)
+        self.gmxapi.build_plugins()
 
     def run(self):
-        self.gmxapi.change_to_test_directory(self.__current_test)
+        self.gmxapi.change_to_test_directory()
         #self.gmxapi.build_plugins(self.__current_test)
         self.gmxapi.run()
-        self.__setup_next_round()

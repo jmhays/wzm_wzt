@@ -14,11 +14,10 @@ class gmxapiConfig(MetaData):
     def __init__(self):
         super().__init__("gmxapi_config")
         self.set_requirements(["tpr", "ensemble_dir", "ensemble_num", "test_sites"])
-        self.workflow = None
         self.state = None
         self.helper = None
 
-    def initialize(self, state: State):
+    def load_state(self, state: State):
         self.state = state
         self.set(test_sites=[])
 
@@ -34,7 +33,8 @@ class gmxapiConfig(MetaData):
         assert (not self.get_missing_keys())
 
         num_test_sites = len(self.get("test_sites"))
-        tprs = [self.get("tpr")]*num_test_sites
+        self.set(num_test_sites=num_test_sites)
+        tprs = [self.get("tpr")] * num_test_sites
         # tprs = self.get("tpr")
         self.workflow = gmx.workflow.from_tpr(tprs, append_output=False)
 
@@ -46,7 +46,7 @@ class gmxapiConfig(MetaData):
             'ensemble_num': self.get("ensemble_num"),
             'iteration': self.state.get("iteration"),
             'test_sites': test_sites
-         }
+        }
         self.helper = DirectoryHelper(top_dir=self.get("ensemble_dir"), param_dict=dir_helper_params)
         self.helper.build_working_dir()
         self.helper.change_dir(level='num_test_sites')
@@ -79,45 +79,42 @@ class gmxapiConfig(MetaData):
                 gmx_cpt = '{}/{}/convergence/state.cpt'.format(member_dir, current_iter)
                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
 
-    def build_plugins(self, site_name):
+    def build_plugins(self):
         all_pair_params = self.state.pair_params
+        plugins_testing = []
+        plugins_fixed = []
 
+        # First add the production plugins to all members of the simulation.
         for name in all_pair_params:
             pair_parameters = all_pair_params[name]
             # If the pair is being restrained but is not part of the testing, then it should be restrained by linear potential.
             if pair_parameters.get("on") and not pair_parameters.get("testing"):
                 assert pair_parameters.get("phase") == "production"
                 plugin = ProductionPluginConfig()
+                plugin.scan_metadata(self.state.general_params)
+                plugin.scan_metadata(self.state.pair_params[name])
+                assert not plugin.get_missing_keys()
+                plugins_fixed.append(plugin.build_plugin())
 
-            # Otherwise, if the pair is being restrained and is the pair being "tested," we need to check the phase.
-            elif name == site_name and pair_parameters.get("testing"):
+            elif pair_parameters.get("testing"):
                 if pair_parameters.get("phase") == "training":
                     plugin = TrainingPluginConfig()
                 else:
                     plugin = ConvergencePluginConfig()
-                if not self.state.pair_params[name].get("on"):
-                    warnings.warn(
-                        "The state file indicates that pair {} is not on; turning on this plugin. If you did not intend to do this, kill the simulation!"
-                        .format(name))
-                self.state.pair_params[name].set(on=True)
-            else:
-                if self.state.pair_params[name].get("on"):
-                    warnings.warn(
-                        "The state file indicates that pair {} is on; turning off this plugin. If you did not intend to do this, kill the simulation!"
-                        .format(name))
-                self.state.pair_params[name].set(on=False)
 
-            if pair_parameters.get("on"):
                 plugin.scan_metadata(self.state.general_params)
                 plugin.scan_metadata(self.state.pair_params[name])
                 assert not plugin.get_missing_keys()
-                self.workflow.add_dependency(plugin.build_plugin())
+                plugins_testing.append(plugin.build_plugin())
+
+        if plugins_fixed:
+            self.workflow.add_dependency(plugins_fixed)
+
+        self.workflow.add_dependency(plugins_testing)
 
     def clean_plugins(self):
-        self.workflow = gmx.workflow.from_tpr(self.get("tpr"), append_output=False)
+        self.workflow = gmx.workflow.from_tpr([self.get("tpr")]*len(self.get("test_sites")), append_output=False)
 
     def run(self):
         gmx.run(work=self.workflow)
 
-    # TODO: once gmxapi enables assignment of an array of plugins to an array of simulations, run test sites in parallel
- 
