@@ -33,25 +33,23 @@ class gmxapiConfig(MetaData):
         assert (not self.state.get_missing_keys())
         assert (not self.get_missing_keys())
 
-        # tprs = [self.get("tpr")]*num_test_sites
-        tprs = self.get("tpr")
+        num_test_sites = len(self.get("test_sites"))
+        tprs = [self.get("tpr")]*num_test_sites
+        # tprs = self.get("tpr")
         self.workflow = gmx.workflow.from_tpr(tprs, append_output=False)
 
-    def change_to_test_directory(self, site_name):
+    def change_to_test_directory(self):
         # Go through test_sites
         test_sites = self.get("test_sites")
-        num_test_sites = len(test_sites)
 
         dir_helper_params = {
             'ensemble_num': self.get("ensemble_num"),
             'iteration': self.state.get("iteration"),
-            'num_test_sites': num_test_sites,
-            'test_site': site_name,
-            'phase': self.state.get("phase", site_name)
-        }
+            'test_sites': test_sites
+         }
         self.helper = DirectoryHelper(top_dir=self.get("ensemble_dir"), param_dict=dir_helper_params)
         self.helper.build_working_dir()
-        self.helper.change_dir(level="phase")
+        self.helper.change_dir(level='num_test_sites')
 
     def move_cpt(self, site_name):
         current_iter = self.state.get('iteration')

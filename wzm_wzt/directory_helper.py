@@ -45,6 +45,7 @@ How the directory structure is organized:
 """
 
 import os
+from wzm_wzt.metadata import site_to_str
 
 
 class DirectoryHelper():
@@ -57,19 +58,19 @@ class DirectoryHelper():
         top_dir :
             the path to the directory containing all the ensemble members.
         param_dict :
-            a dictionary specifying the ensemble number, the iteration, the number of total test sites, the specific test site of interest, and the phase of the simulation.
-
+            a dictionary specifying the ensemble number, the iteration, and the test sites.
         Returns
         -------
         """
         self._top_dir = top_dir
-        self._required_parameters = ['ensemble_num', 'iteration', 'num_test_sites', 'test_site', 'phase']
+        self._required_parameters = ['ensemble_num', 'iteration', 'test_sites']  # , 'test_site', 'phase']
         for required in self._required_parameters:
             if required not in param_dict:
                 raise KeyError('Must define {}'.format(required))
         self._param_dict = param_dict
+        self._param_dict['num_test_sites'] = len(self._param_dict['test_sites'])
 
-    def get_dir(self, level):
+    def get_dir(self, level, test_site=None, phase=None):
         """Get the directory for however far you want to go down the directory
         tree.
 
@@ -91,14 +92,23 @@ class DirectoryHelper():
             return_dir = '{}/mem_{}'.format(self._top_dir, pdict['ensemble_num'])
         elif level == 'iteration':
             return_dir = '{}/mem_{}/{}'.format(self._top_dir, pdict['ensemble_num'], pdict['iteration'])
+        elif level == 'num_test_sites':
+            return_dir = '{}/mem_{}/{}/num_test_sites_{}/'.format(self._top_dir, pdict['ensemble_num'],
+                                                                  pdict['iteration'], pdict['num_test_sites'])
         elif level == 'test_site':
+            if not test_site:
+                raise ValueError("You must provide a test site name to change to the appropriate directory")
             return_dir = '{}/mem_{}/{}/num_test_sites_{}/{}'.format(self._top_dir, pdict['ensemble_num'],
                                                                     pdict['iteration'], pdict['num_test_sites'],
-                                                                    pdict['test_site'])
+                                                                    test_site)
         elif level == 'phase':
+            if not test_site or not phase:
+                raise ValueError(
+                    "You must provide a test site name ({}) and the phase ({}) to change to the appropriate directory".
+                    format(test_site, phase))
             return_dir = '{}/mem_{}/{}/num_test_sites_{}/{}/{}'.format(self._top_dir, pdict['ensemble_num'],
                                                                        pdict['iteration'], pdict['num_test_sites'],
-                                                                       pdict['test_site'], pdict['phase'])
+                                                                       test_site, phase)
         else:
             raise ValueError('{} is not a valid directory type for BRER simulations'.format('type'))
         return return_dir
@@ -106,25 +116,26 @@ class DirectoryHelper():
     def build_working_dir(self):
         """Checks to see if the working directory for current state of BRER
         simulation exists. If it does not, creates the directory.
+        """
 
+        for site in self._param_dict['test_sites']:
+            site_name = site_to_str(site)
+            for phase in ['training', 'convergence']:
+                os.makedirs(self.get_dir(level='phase', test_site=site_name, phase=phase), exist_ok=True)
+        os.makedirs('{}/production'.format(self.get_dir('num_test_sites')), exist_ok=True)
+
+    def change_dir(self, level, test_site=None, phase=None):
+        """Change directory to the directory specified by 'level'
+        
         Parameters
         ----------
-
-        Returns
-        -------
-        """
-        os.makedirs(self.get_dir('phase'), exist_ok=True)
-
-    def change_dir(self, level):
+        level : str
+            one of 'top_dir', 'ensemble_num', 'iteration', 'num_test_sites', 'test_site', 'phase'
         """
 
-        Parameters
-        ----------
-        level :
-
-
-        Returns
-        -------
-
-        """
-        os.chdir(self.get_dir(level))
+        if level == 'phase' and not (test_site or phase):
+            raise ValueError('You must provide both a test site {} and phase {} to change directories'.format(
+                test_site, phase))
+        if level == 'test_site' and not test_site:
+            raise ValueError('You must provide a test site.')
+        os.chdir(self.get_dir(level, test_site=test_site, phase=phase))
