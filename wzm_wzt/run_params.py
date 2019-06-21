@@ -97,15 +97,7 @@ class State(MetaData):
     ----------
     MetaData : class
         Inherits from MetaData class
-    
-    Raises
-    ------
-    Warning
-        If you try to import an incomplete set of general parameters
-    Warning
-        If you try to import an incomplete set of pair parameters
-    Warning
-        If you try to overwrite a particular set of pair parameters.
+
     """
 
     def __init__(self, filename):
@@ -186,7 +178,7 @@ class State(MetaData):
 
     def load_from_json(self, fnm='state.json'):
         self.set_from_dictionary(json.load(open(fnm)))
-    
+
     def get_all_missing_keys(self):
         missing = []
         for miss in self.get_missing_keys():

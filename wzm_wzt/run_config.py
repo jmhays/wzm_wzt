@@ -121,36 +121,5 @@ class gmxapiConfig(MetaData):
     def run(self):
         gmx.run(work=self.workflow)
 
-    # TODO: once gmxapi enables assignment of an array of plugins to an array of simulations, we can use this code to run test sites in parallel
-    # def build_plugins(self):
-    #     """
-
-    #     Parameters
-    #     ----------
-    #     sites_settings : dict
-    #         [description]
-    #     """
-
-    #     if not self.state:
-    #         raise ValueError("A State object has not yet been defined.")
-
-    #     all_pair_params = self.state.pair_params
-
-    #     for name in all_pair_params:
-    #         pair_parameters = all_pair_params[name]
-    #         # Are we restraining this pair?
-    #         if pair_parameters.get("on"):
-    #             # Are we testing the pair or just holding it fixed?
-    #             if not pair_parameters.get("testing"):
-    #                 # If holding fixed, build a production plugin
-    #                 plugin = ProductionPluginConfig()
-    #             else:
-    #                 if pair_parameters.get("phase") == "training":
-    #                     plugin = TrainingPluginConfig()
-    #                 else:
-    #                     plugin = ConvergencePluginConfig()
-
-    #             plugin.scan_metadata(pair_parameters)
-    #             plugin.scan_metadata(self.state.general_parameters)
-    #             assert not plugin.get_missing_keys()
-    #             self.workflow.add_dependency(plugin.build_plugin())
+    # TODO: once gmxapi enables assignment of an array of plugins to an array of simulations, run test sites in parallel
+ 

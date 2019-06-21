@@ -15,7 +15,6 @@ from wzm_wzt.run_config import gmxapiConfig
 
 
 class Simulation():
-
     def __init__(self, tpr, ensemble_dir, ensemble_num, site_filename, deer_data_filename):
         sites = json.load(open(site_filename))
         deer_data = json.load(open(deer_data_filename))
@@ -26,7 +25,7 @@ class Simulation():
         gmx_config_parameters = {
             'tpr': tpr,
             'ensemble_dir': ensemble_dir,
-            'ensemble_num': 0,
+            'ensemble_num': ensemble_num,
             'test_sites': []
         }
 
@@ -60,7 +59,8 @@ class Simulation():
         self.gmxapi.state.write_to_json()
 
         self.__current_test = None
-    
+        self.__finished_tests = None
+
     def set_current_test_site(self, site_name):
         self.__current_test = site_name
         self.gmxapi.state.set(site_name=site_name, on=True)
@@ -70,8 +70,17 @@ class Simulation():
             self.gmxapi.clean_plugins()
 
         self.gmxapi.build_plugins(self.__current_test)
-        
+
+    def __setup_next_round(self):
+        current = self.__current_test
+        phase = self.gmxapi.state.get("phase", site_name=current)
+        if phase == "training":
+            self.gmxapi.state.set(phase="convergence", site_name=current)
+        if phase == "convergence":
+            self.gmxapi.state.set(phase="production", on=True, testing=False, site_name=current)
+
     def run(self):
         self.gmxapi.change_to_test_directory(self.__current_test)
         #self.gmxapi.build_plugins(self.__current_test)
         self.gmxapi.run()
+        self.__setup_next_round()
