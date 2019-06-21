@@ -47,9 +47,9 @@ before_install:
 install:
 
     # Install gromacs
-  - source devtools/travis-ci/install_gmx_2019.sh
+  - source devtools/travis-ci/install_gmx_master.sh
     # Install gmxapi
-  - source devtools/travis-ci/install_gmxapi.sh
+  - source devtools/travis-ci/install_gmxapi_pr224.sh
     # Install plugins
   - source devtools/travis-ci/install_sample_restraint.sh
     # Build and install package
