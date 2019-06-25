@@ -26,7 +26,7 @@ class gmxapiConfig(MetaData):
             pair_params = self.state.pair_params[site_name]
             #if pair_params.get("on") and pair_params.get("testing"):
             if pair_params.get("testing"):
-                self._metadata["test_sites"].append(site_name)
+                self._metadata["test_sites"].append(pair_params.get("sites"))
 
         # Check that we're not missing anything...
         assert (not self.state.get_missing_keys())
@@ -41,7 +41,6 @@ class gmxapiConfig(MetaData):
     def change_to_test_directory(self):
         # Go through test_sites
         test_sites = self.get("test_sites")
-
         dir_helper_params = {
             'ensemble_num': self.get("ensemble_num"),
             'iteration': self.state.get("iteration"),
@@ -108,13 +107,12 @@ class gmxapiConfig(MetaData):
                 plugins_testing.append(plugin.build_plugin())
 
         if plugins_fixed:
-            self.workflow.add_dependency(plugins_fixed)
-
+            for fixed_plugin in plugins_fixed:
+                self.workflow.add_dependency([fixed_plugin] * self.get("num_test_sites"))
         self.workflow.add_dependency(plugins_testing)
 
     def clean_plugins(self):
-        self.workflow = gmx.workflow.from_tpr([self.get("tpr")]*len(self.get("test_sites")), append_output=False)
+        self.workflow = gmx.workflow.from_tpr([self.get("tpr")] * self.get("num_test_sites"), append_output=False)
 
     def run(self):
         gmx.run(work=self.workflow)
-

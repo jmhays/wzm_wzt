@@ -26,6 +26,8 @@ def test_gmxapi_config_1(data_dir, tmpdir, state_dict):
     gmx_config.change_to_test_directory()
     gmx_config.build_plugins()
 
+    state.pair_params['3673_12035'].set(on=True, testing=True, phase="training")
+    state.write_to_json()
 
 def test_gmxapi_config_2(data_dir, tmpdir, state_dict):
     # Set up a state object
@@ -45,7 +47,11 @@ def test_gmxapi_config_2(data_dir, tmpdir, state_dict):
     assert not gmx_config.state.get_missing_keys()
     gmx_config.change_to_test_directory()
     gmx_config.build_plugins()
-    print(gmx_config.workflow.workspec)
+
+    #print(gmx_config.workflow.workspec)
+
+    state.pair_params['3673_12035'].set(on=True, testing=True, phase="training")
+    state.write_to_json()
 
 
 # def test_gmxapi_run(data_dir, tmpdir, state_dict):

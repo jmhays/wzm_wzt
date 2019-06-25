@@ -102,8 +102,7 @@ class MetaData(ABC):
 
         else:
             for key in kwargs:
-                if key in self.__required_parameters:
-                    self._metadata[key] = kwargs[key]
+                self._metadata[key] = kwargs[key]
 
     def get(self, key):
         """
