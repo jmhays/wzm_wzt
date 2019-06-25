@@ -7,6 +7,7 @@ from wzm_wzt.experimental_data import ExperimentalData
 import warnings
 import json
 import os
+from mpi4py import MPI
 
 
 class GeneralParams(MetaData):
@@ -102,10 +103,9 @@ class State(MetaData):
 
     def __init__(self, filename):
         super().__init__("state")
-        self.set_requirements(["general_parameters", "pair_parameters"])
+        self.set_requirements(["general_parameters", "pair_parameters", "test_sites"])
         self.general_params = None
         self.pair_params = {}
-        self.test_sites = []
         self.json = filename
         self.names = []
 
@@ -114,6 +114,8 @@ class State(MetaData):
             if key in self.general_params.get_requirements():
                 self.general_params.set(key, value)
                 self._metadata["general_parameters"][key] = value
+            elif key == "test_sites":
+                self._metadata[key] = value
             elif site_name:
                 self.pair_params[site_name].set(key, value)
                 self._metadata["pair_parameters"][site_name][key] = value
@@ -124,6 +126,8 @@ class State(MetaData):
     def get(self, key, site_name=None):
         if key in self.general_params.get_requirements():
             answer = self.general_params.get(key)
+        elif key == "test_sites":
+            answer = self._metadata[key]
         elif site_name:
             answer = self.pair_params[site_name].get(key)
         else:
@@ -153,14 +157,16 @@ class State(MetaData):
         self._metadata["pair_parameters"][pair_parameters.name] = pair_parameters.get_as_dictionary()
 
         # Update the list of test_sites
+        self._metadata["test_sites"] = []
         for site_name in self.pair_params:
             if self.pair_params[site_name].get("testing"):
-                self.test_sites.append(site_name)
+                self._metadata["test_sites"].append(site_name)
             self.names.append(site_name)
 
     def write_to_json(self):
-        backup_file(self.json, 'copy')
-        json.dump(self.get_as_dictionary(), open(self.json, "w"))
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            backup_file(self.json, 'copy')
+            json.dump(self.get_as_dictionary(), open(self.json, "w"))
 
     def new_iteration(self):
         self.set(iteration=(self._metadata["general_parameters"]["iteration"] + 1), start_time=0.)
@@ -171,10 +177,15 @@ class State(MetaData):
         self._metadata = dictionary
         self.general_params = GeneralParams()
         self.general_params.set_from_dictionary(self._metadata["general_parameters"])
+        
+        self._metadata["test_sites"] = []
+
         for name in self._metadata["pair_parameters"]:
             self.names.append(name)
             self.pair_params[name] = PairParams(name)
             self.pair_params[name].set_from_dictionary(self._metadata["pair_parameters"][name])
+            if self.pair_params[name].get("testing"):
+                self._metadata["test_sites"].append(name)
 
     def load_from_json(self, fnm='state.json'):
         self.set_from_dictionary(json.load(open(fnm)))

@@ -8,6 +8,7 @@ Handles the primary functions
 
 import json
 import os
+import gmx
 from wzm_wzt.run_params import State, GeneralParams, PairParams
 from wzm_wzt.experimental_data import ExperimentalData
 from wzm_wzt.metadata import site_to_str
@@ -58,8 +59,6 @@ class Simulation():
         self.gmxapi = gmxapi_config
         self.gmxapi.state.write_to_json()
 
-        self.__finished_tests = None
-
     def build_plugins(self, clean=False):
         if clean:
             self.gmxapi.clean_plugins()
@@ -67,5 +66,13 @@ class Simulation():
 
     def run(self):
         self.gmxapi.change_to_test_directory()
-        #self.gmxapi.build_plugins(self.__current_test)
-        self.gmxapi.run()
+        workdir_list = []
+        test_sites = self.gmxapi.state.get("test_sites")
+        for test_site in test_sites:
+            workdir_list.append("{}/{}/{}".format(os.getcwd(), test_site,
+                                                  self.gmxapi.state.get("phase", site_name=test_site)))
+
+        context = gmx.context.ParallelArrayContext(self.gmxapi.workflow, workdir_list=workdir_list)
+        with context as session:
+            session.run()
+

@@ -82,6 +82,7 @@ class gmxapiConfig(MetaData):
         all_pair_params = self.state.pair_params
         plugins_testing = []
         plugins_fixed = []
+        test_sites_ordered = []
 
         # First add the production plugins to all members of the simulation.
         for name in all_pair_params:
@@ -96,6 +97,7 @@ class gmxapiConfig(MetaData):
                 plugins_fixed.append(plugin.build_plugin())
 
             elif pair_parameters.get("testing"):
+                test_sites_ordered.append(name)
                 if pair_parameters.get("phase") == "training":
                     plugin = TrainingPluginConfig()
                 else:
@@ -105,7 +107,7 @@ class gmxapiConfig(MetaData):
                 plugin.scan_metadata(self.state.pair_params[name])
                 assert not plugin.get_missing_keys()
                 plugins_testing.append(plugin.build_plugin())
-
+        self.state.set(test_sites=test_sites_ordered)
         if plugins_fixed:
             for fixed_plugin in plugins_fixed:
                 self.workflow.add_dependency([fixed_plugin] * self.get("num_test_sites"))
