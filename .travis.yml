@@ -47,7 +47,7 @@ before_install:
 install:
 
     # Install gromacs
-  - if [ "${TRAVIS_BRANCH}" != "master" ] ; then source devtools/travis-ci/install_gromacs_devel.sh ; else source devtools/travis-ci/install_gromacs_2019.sh; fi
+  - if [ "${TRAVIS_BRANCH}" != "master" ] ; then source devtools/travis-ci/install_gmx_devel.sh ; else source devtools/travis-ci/install_gmx_2019.sh; fi
     # Install gmxapi
   - if [ "${TRAVIS_BRANCH}" != "master" ] ; then source devtools/travis-ci/install_gmxapi_devel.sh ; else source devtools/travis-ci/install_gmxapi.sh; fi
     # Install plugins

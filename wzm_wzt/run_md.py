@@ -16,7 +16,24 @@ from wzm_wzt.run_config import gmxapiConfig
 
 
 class Simulation():
+    """Run Wzm-Wzt simulations
+    """
     def __init__(self, tpr, ensemble_dir, ensemble_num, site_filename, deer_data_filename):
+        """Initialize the run.
+        
+        Parameters
+        ----------
+        tpr : str
+            path to tpr
+        ensemble_dir : str
+            path to top-level ensemble directory
+        ensemble_num : int
+            ensemble member you want to run
+        site_filename : str
+            path to json file containing atom ids for restraints
+        deer_data_filename : str
+            path to json file containing DEER data for restraints.
+        """
         sites = json.load(open(site_filename))
         deer_data = json.load(open(deer_data_filename))
 
@@ -60,11 +77,20 @@ class Simulation():
         self.gmxapi.state.write_to_json()
 
     def build_plugins(self, clean=False):
+        """Build the gmxapi plugins.
+        
+        Parameters
+        ----------
+        clean : bool, optional
+            Delete all previous plugins?, by default False
+        """
         if clean:
             self.gmxapi.clean_plugins()
         self.gmxapi.build_plugins()
 
     def run(self):
+        """Run the gmxapi workflow.
+        """
         self.gmxapi.change_to_test_directory()
         workdir_list = []
         test_sites = self.gmxapi.state.get("test_sites")
@@ -75,4 +101,3 @@ class Simulation():
         context = gmx.context.ParallelArrayContext(self.gmxapi.workflow, workdir_list=workdir_list)
         with context as session:
             session.run()
-
