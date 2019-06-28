@@ -15,15 +15,6 @@ import logging
 
 # @withmpi_only
 def test_simulation(tmpdir, data_dir):
-    logging.getLogger().setLevel(logging.DEBUG)
-    # create console handler
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    # create formatter and add it to the handler
-    formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s: %(message)s')
-    ch.setFormatter(formatter)
-    # add the handlers to the logger
-    logging.getLogger().addHandler(ch)
 
     ensemble_num = 0
     ensemble_dir = "{}".format(tmpdir)
@@ -37,6 +28,13 @@ def test_simulation(tmpdir, data_dir):
     if os.path.exists(statefile):
         os.remove(statefile)
     sim = Simulation(tpr, ensemble_dir, ensemble_num, site_filename, deer_data_filename)
+    sim.gmxapi.state.set(**{
+        "A": 5,
+        "tau": 0.1,
+        "tolerance": 100,
+        "num_samples": 2,
+        "sample_period": 0.1,
+        "production_time": 0.2
+    })
     sim.build_plugins(clean=True)
-    #sim.run()
-
+    sim.run()

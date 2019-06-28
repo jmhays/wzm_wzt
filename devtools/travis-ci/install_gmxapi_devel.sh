@@ -4,8 +4,8 @@ set -ev
 pushd $HOME
 git clone --depth=1 --no-single-branch https://github.com/kassonlab/gmxapi.git
 pushd gmxapi
-git fetch origin pull/224/head:pr-224
-git checkout pr-224
+git branch -a
+git checkout devel
 rm -rf build
 mkdir -p build
 pushd build

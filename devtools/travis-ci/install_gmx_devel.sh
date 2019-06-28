@@ -9,6 +9,8 @@ export GMXAPI=ON
 pushd $HOME
 [ -d gromacs-gmxapi ] || git clone --depth=1 --no-single-branch https://github.com/kassonlab/gromacs-gmxapi.git
 pushd gromacs-gmxapi
+git branch -a
+git checkout devel
 rm -rf build  # get rid of any possible lingering build directories
 mkdir build
 pushd build
