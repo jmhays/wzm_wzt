@@ -4,16 +4,16 @@ from wzm_wzt.run_md import Simulation
 import os
 import logging
 
-# try:
-#     from mpi4py import MPI
-#     withmpi_only = \
-#         pytest.mark.skipif(not MPI.Is_initialized() or MPI.COMM_WORLD.Get_size() < 6,
-#                            reason="Test requires at least 6 MPI ranks, but MPI is not initialized or too small.")
-# except ImportError:
-#     withmpi_only = pytest.mark.skip(reason="Test requires at least 6 MPI ranks, but mpi4py is not available.")
+try:
+    from mpi4py import MPI
+    withmpi_only = \
+        pytest.mark.skipif(not MPI.Is_initialized() or MPI.COMM_WORLD.Get_size() < 6,
+                           reason="Test requires at least 6 MPI ranks, but MPI is not initialized or too small.")
+except ImportError:
+    withmpi_only = pytest.mark.skip(reason="Test requires at least 6 MPI ranks, but mpi4py is not available.")
 
 
-# @withmpi_only
+@withmpi_only
 def test_simulation(tmpdir, data_dir):
 
     ensemble_num = 0
