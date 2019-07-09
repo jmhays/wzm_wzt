@@ -7,8 +7,9 @@ Handles the primary functions
 """
 
 import json
-import os
+import os, re
 import gmx
+import numpy as np
 from wzm_wzt.run_params import State, GeneralParams, PairParams
 from wzm_wzt.experimental_data import ExperimentalData
 from wzm_wzt.metadata import site_to_str
@@ -18,6 +19,7 @@ from wzm_wzt.run_config import gmxapiConfig
 class Simulation():
     """Run Wzm-Wzt simulations
     """
+
     def __init__(self, tpr, ensemble_dir, ensemble_num, site_filename, deer_data_filename):
         """Initialize the run.
         
@@ -101,3 +103,40 @@ class Simulation():
         context = gmx.context.ParallelArrayContext(self.gmxapi.workflow, workdir_list=workdir_list)
         with context as session:
             session.run()
+
+    def re_sample(self):
+        test_sites = self.gmxapi.state.get("test_sites")
+        self.gmxapi.change_to_test_directory()
+        log_files = ["{}/convergence/{}.log".format(test_site, test_site) for test_site in test_sites]
+        _, probs = work_calculation(log_files)
+        return np.random.choice(a=list(probs.keys()), p=list(probs.values()))
+
+def work_calculation(log_files: list):
+    work = {}
+    for fnm in log_files:
+        site_name = re.search("[0-9]+_[0-9]+", fnm).group(0)
+        data = []
+
+        # Calculate the total path distance
+        with open(fnm) as log_file:
+            newline = log_file.readline()  # read the header
+            while 1:
+                newline = log_file.readline()
+                if not newline:
+                    break
+                splitline = newline.split()
+                r, alpha = float(splitline[1]), float(splitline[3])
+                data.append([r, alpha])
+        data = np.array(data)
+        delta_x = np.sum(np.abs(data[1:, 0] - data[:-1, 0]))
+
+        # Now the actual work value:
+        work[site_name] = delta_x * alpha
+
+    z = np.sum(list(work.values()))
+
+    probs = {}
+    for site_name in work:
+        probs[site_name] = work[site_name] / z
+
+    return work, probs
