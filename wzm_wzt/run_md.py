@@ -109,7 +109,8 @@ class Simulation():
         self.gmxapi.change_to_test_directory()
         log_files = ["{}/convergence/{}.log".format(test_site, test_site) for test_site in test_sites]
         _, probs = work_calculation(log_files)
-        return np.random.choice(a=list(probs.keys()), p=list(probs.values()))
+        next_site = np.random.choice(a=list(probs.keys()), p=list(probs.values()))
+        return next_site
 
 def work_calculation(log_files: list):
     work = {}
@@ -134,7 +135,6 @@ def work_calculation(log_files: list):
         work[site_name] = delta_x * alpha
 
     z = np.sum(list(work.values()))
-
     probs = {}
     for site_name in work:
         probs[site_name] = work[site_name] / z

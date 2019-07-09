@@ -1,8 +1,11 @@
 import pytest
 
 from wzm_wzt.run_md import Simulation
+from wzm_wzt.metadata import site_to_str
 import os
 import logging
+import shutil
+import glob
 
 try:
     from mpi4py import MPI
@@ -14,21 +17,15 @@ except ImportError:
 
 
 @withmpi_only
-def test_simulation(tmpdir, data_dir):
-
-    ensemble_num = 0
-    ensemble_dir = "{}".format(tmpdir)
-    os.makedirs("{}/mem_{}".format(ensemble_dir, ensemble_num), exist_ok=True)
-
-    site_filename = "{}/sites.json".format(data_dir)
-    deer_data_filename = "{}/deer_data.json".format(data_dir)
-    tpr = "{}/wzmwzt.tpr".format(data_dir)
-
-    statefile = "{}/mem_{}/state.json".format(ensemble_dir, ensemble_num)
-    if os.path.exists(statefile):
-        os.remove(statefile)
-    sim = Simulation(tpr, ensemble_dir, ensemble_num, site_filename, deer_data_filename)
-    sim.gmxapi.state.set(**{
+def test_simulation(simulation):
+    """Test that a simulation runs, provided you have enough mpi threads.
+    
+    Parameters
+    ----------
+    simulation : Simulation
+        Simulation object defined in conftest.py
+    """
+    simulation.gmxapi.state.set(**{
         "A": 5,
         "tau": 0.1,
         "tolerance": 100,
@@ -36,5 +33,25 @@ def test_simulation(tmpdir, data_dir):
         "sample_period": 0.1,
         "production_time": 0.2
     })
-    sim.build_plugins(clean=True)
-    sim.run()
+    simulation.build_plugins(clean=True)
+    simulation.run()
+
+
+def test_resampling(tmpdir, data_dir, simulation):
+    # Make a directory structure that can support the resampling operation
+    simulation.gmxapi.change_to_test_directory()
+
+    # Move and rename some existing log files to mimic what might be found in a real run
+    logs_data_dir = glob.glob("{}/convergence/*.log".format(data_dir))
+
+    counter = 0
+    for site in simulation.gmxapi.get("test_sites"):
+        name = site_to_str(site)
+        shutil.copy(logs_data_dir[counter], "{}/convergence/{}.log".format(name, name))
+        if counter == len(logs_data_dir) - 1:
+            counter = 0
+        else:
+            counter += 1
+
+    # Finally, do the actual resampling!
+    simulation.re_sample()
