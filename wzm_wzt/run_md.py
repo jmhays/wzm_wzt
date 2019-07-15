@@ -131,7 +131,8 @@ class Simulation():
         # If we've moved on to production, we have to pick one site to restrain
         if phase == "production":
             fixed_site = self.re_sample()
-            self.gmxapi.state.set(site_name=fixed_site, on=True, testing=False)
+            print("Completed resampling procedure and have a selected {}".format(fixed_site))
+            self.gmxapi.state.set(site_name=fixed_site, on=1, testing=0)
         
         self.gmxapi.state.write_to_json()
 
