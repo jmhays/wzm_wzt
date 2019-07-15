@@ -10,11 +10,13 @@ import json
 import os, re
 import gmx
 import numpy as np
+from mpi4py import MPI
 from wzm_wzt.run_params import State, GeneralParams, PairParams
 from wzm_wzt.experimental_data import ExperimentalData
 from wzm_wzt.metadata import site_to_str
 from wzm_wzt.run_config import gmxapiConfig
 
+comm = MPI.COMM_WORLD
 
 class Simulation():
     """Run Wzm-Wzt simulations
@@ -103,6 +105,35 @@ class Simulation():
         context = gmx.context.ParallelArrayContext(self.gmxapi.workflow, workdir_list=workdir_list)
         with context as session:
             session.run()
+        
+        comm.Barrier()
+
+        for test_site in test_sites:
+            site_name = test_site
+            phase = self.gmxapi.state.get("phase", site_name=site_name)
+            if phase == "training":
+                # Get alpha.
+                # TODO: pull this from the context.
+                self.gmxapi.helper.change_dir(level="phase", test_site=site_name, phase=phase)
+                log_file = "{}.log".format(site_name)
+                if not os.path.exists(log_file):
+                    raise FileNotFoundError("The log file {} was not written properly".format(log_file))
+
+                with open(log_file, "r") as fh:
+                    for line in fh:
+                        pass
+                    alpha = float(line.split()[5])
+                    self.gmxapi.state.set(alpha=alpha, site_name=site_name)
+                self.gmxapi.state.set(phase="convergence", site_name=site_name)
+            elif phase == "convergence":
+                self.gmxapi.state.set(phase="production", site_name=site_name)
+        
+        # If we've moved on to production, we have to pick one site to restrain
+        if phase == "production":
+            fixed_site = self.re_sample()
+            self.gmxapi.state.set(site_name=fixed_site, on=True, testing=False)
+        
+        self.gmxapi.state.write_to_json()
 
     def re_sample(self):
         test_sites = self.gmxapi.state.get("test_sites")
@@ -111,6 +142,7 @@ class Simulation():
         _, probs = work_calculation(log_files)
         next_site = np.random.choice(a=list(probs.keys()), p=list(probs.values()))
         return next_site
+
 
 def work_calculation(log_files: list):
     work = {}
