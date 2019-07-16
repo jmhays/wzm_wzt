@@ -15,8 +15,28 @@ from wzm_wzt.run_params import State, GeneralParams, PairParams
 from wzm_wzt.experimental_data import ExperimentalData
 from wzm_wzt.metadata import site_to_str
 from wzm_wzt.run_config import gmxapiConfig
+import logging
 
 comm = MPI.COMM_WORLD
+
+
+def configure_logging(filename):
+    logger = logging.getLogger("my logger")
+    logger.setLevel(logging.DEBUG)
+    # Format for our loglines
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    # Setup console logging
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    # Setup file logging as well
+    fh = logging.FileHandler(filename)
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    return logger
+
 
 class Simulation():
     """Run Wzm-Wzt simulations
@@ -79,6 +99,13 @@ class Simulation():
 
         self.gmxapi = gmxapi_config
         self.gmxapi.state.write_to_json()
+        self.logger = configure_logging("{}/{}.log".format(ensemble_dir, ensemble_num))
+        self.__parallel_log("Set up simulation with state: {}".format(self.gmxapi.state.get_as_dictionary()))
+
+    def __parallel_log(self, message, level="info"):
+        if comm.Get_rank() == 0:
+            if level == "info":
+                self.logger.info(message)
 
     def build_plugins(self, clean=False):
         """Build the gmxapi plugins.
@@ -105,8 +132,9 @@ class Simulation():
         context = gmx.context.ParallelArrayContext(self.gmxapi.workflow, workdir_list=workdir_list)
         with context as session:
             session.run()
-        
+
         comm.Barrier()
+        self.__parallel_log("The MD portion of the simulation has finished.")
 
         for test_site in test_sites:
             site_name = test_site
@@ -127,21 +155,28 @@ class Simulation():
                 self.gmxapi.state.set(phase="convergence", site_name=site_name)
             elif phase == "convergence":
                 self.gmxapi.state.set(phase="production", site_name=site_name)
-        
+
+        comm.Barrier()
+        self.__parallel_log("Phases have been set to: {}".format(" ".join(
+            [self.gmxapi.state.get("phase", site_name=site_name) for site_name in test_sites])))
+
         # If we've moved on to production, we have to pick one site to restrain
         if phase == "production":
             fixed_site = self.re_sample()
-            print("Completed resampling procedure and have a selected {}".format(fixed_site))
+            self.__parallel_log("Completed resampling procedure and have a selected {}".format(fixed_site))
             self.gmxapi.state.set(site_name=fixed_site, on=1, testing=0)
-        
+
         self.gmxapi.state.write_to_json()
 
     def re_sample(self):
-        test_sites = self.gmxapi.state.get("test_sites")
-        self.gmxapi.change_to_test_directory()
-        log_files = ["{}/convergence/{}.log".format(test_site, test_site) for test_site in test_sites]
-        _, probs = work_calculation(log_files)
-        next_site = np.random.choice(a=list(probs.keys()), p=list(probs.values()))
+        next_site = ""
+        if comm.Get_rank() == 0:
+            test_sites = self.gmxapi.state.get("test_sites")
+            self.gmxapi.change_to_test_directory()
+            log_files = ["{}/convergence/{}.log".format(test_site, test_site) for test_site in test_sites]
+            _, probs = work_calculation(log_files)
+            next_site = np.random.choice(a=list(probs.keys()), p=list(probs.values()))
+        comm.bcast(next_site, root=0)
         return next_site
 
 
