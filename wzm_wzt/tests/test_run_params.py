@@ -35,24 +35,38 @@ def test_state(raw_deer_data, sites, tmpdir):
 
     gp = GeneralParams()
     gp.load_experimental_data(experimental_data)
-    gp.set_to_defaults()
     
     state = State(filename="{}/state.json".format(os.getcwd()))
-    state.import_general_parameters(gp)
 
+    # Check that a whole bunch of warnings show up
+    with pytest.warns(Warning):
+        state.import_general_parameters(gp)
+    gp.set_to_defaults()
+    gp.set(bins=None, distribution=None)
+    with pytest.warns(Warning):
+        state.import_general_parameters(gp)
+    gp.set(bins=[0.1])
+    with pytest.warns(Warning):
+        state.import_general_parameters(gp)
+
+    # Now warnings for pair parameters
     if "sites" in sites:
         sites = sites["sites"]
     for site in sites:
         pair_param = PairParams(name=site)
+        pair_param.set_to_defaults()
+        with pytest.warns(Warning):
+            state.import_pair_parameters(pair_param)
         pair_param.load_sites(sites[site])
         pair_param.set_to_defaults()
-        state.import_pair_parameters(pair_param)
+        with pytest.warns(Warning):
+            state.import_pair_parameters(pair_param)
     
     assert not state.get_missing_keys()
     assert not state.general_params.get_missing_keys()
     for name in state.pair_params:
         assert not state.pair_params[name].get_missing_keys()
-    
+    assert not state.get_all_missing_keys()
     state.write_to_json()
     state.new_iteration()
 
