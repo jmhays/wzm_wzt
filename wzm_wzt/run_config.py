@@ -13,30 +13,42 @@ from wzm_wzt.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig
 class gmxapiConfig(MetaData):
     def __init__(self):
         super().__init__("gmxapi_config")
-        self.set_requirements(["tpr", "ensemble_dir", "ensemble_num", "test_sites"])
+        self.set_requirements(["tpr", "ensemble_dir", "ensemble_num", "test_sites", "num_test_sites"])
         self.state = None
         self.helper = None
 
     def load_state(self, state: State):
         self.state = state
         self.set(test_sites=[])
+        sites_on = 0  # for counting the number of sites that are turned on
 
         # Now that we've defined a state, we can calculate the number of test sites and set up the workflow
         for site_name in self.state.pair_params:
             pair_params = self.state.pair_params[site_name]
-            #if pair_params.get("on") and pair_params.get("testing"):
+            if pair_params.get("on"):
+                sites_on += 1
             if pair_params.get("testing"):
                 self._metadata["test_sites"].append(pair_params.get("sites"))
 
+        phase = pair_params.get("phase")
+
         # Check that we're not missing anything...
         assert (not self.state.get_missing_keys())
-        assert (not self.get_missing_keys())
 
-        num_test_sites = len(self.get("test_sites"))
+        test_num_test_sites = len(self.get("test_sites"))
+        # Now we need to correct in case the number of test sites is zero (meaning we're in production)
+        if test_num_test_sites == 0:
+            assert phase == "production"
+            num_test_sites = len(self.state.pair_params) - sites_on + 1
+            tprs = self.get("tpr")
+        else:
+            num_test_sites = test_num_test_sites
+            tprs = [self.get("tpr")] * num_test_sites
+
         self.set(num_test_sites=num_test_sites)
-        tprs = [self.get("tpr")] * num_test_sites
-        # tprs = self.get("tpr")
-        self.workflow = gmx.workflow.from_tpr(tprs, append_output=False)
+
+        assert (not self.get_missing_keys())
+        # Do resampling of targets if training phase
 
     def change_to_test_directory(self):
         # Go through test_sites
@@ -44,8 +56,10 @@ class gmxapiConfig(MetaData):
         dir_helper_params = {
             'ensemble_num': self.get("ensemble_num"),
             'iteration': self.state.get("iteration"),
-            'test_sites': test_sites
+            'test_sites': test_sites,
+            'num_test_sites': self.get("num_test_sites")
         }
+
         self.helper = DirectoryHelper(top_dir=self.get("ensemble_dir"), param_dict=dir_helper_params)
         self.helper.build_working_dir()
         self.helper.change_dir(level='num_test_sites')
@@ -87,34 +101,50 @@ class gmxapiConfig(MetaData):
         # First add the production plugins to all members of the simulation.
         for name in all_pair_params:
             pair_parameters = all_pair_params[name]
+            print("Pair Parameter: {}".format(name))
             # If the pair is being restrained but is not part of the testing, then it should be restrained by linear potential.
-            if pair_parameters.get("on") and not pair_parameters.get("testing"):
-                assert pair_parameters.get("phase") == "production"
-                plugin = ProductionPluginConfig()
-                plugin.scan_metadata(self.state.general_params)
-                plugin.scan_metadata(self.state.pair_params[name])
-                assert not plugin.get_missing_keys()
-                plugins_fixed.append(plugin.build_plugin())
-
-            elif pair_parameters.get("testing"):
-                test_sites_ordered.append(name)
-                if pair_parameters.get("phase") == "training":
-                    plugin = TrainingPluginConfig()
+            if pair_parameters.get("on"):
+                print("pair parameter {} is on".format(name))
+                if not pair_parameters.get("testing"):
+                    assert pair_parameters.get("phase") == "production"
+                    plugin = ProductionPluginConfig()
+                    plugin.scan_metadata(self.state.general_params)
+                    plugin.scan_metadata(self.state.pair_params[name])
+                    assert not plugin.get_missing_keys()
+                    plugins_fixed.append(plugin.build_plugin())
                 else:
-                    plugin = ConvergencePluginConfig()
+                    test_sites_ordered.append(name)
+                    if pair_parameters.get("phase") == "training":
+                        plugin = TrainingPluginConfig()
+                    else:
+                        plugin = ConvergencePluginConfig()
 
-                plugin.scan_metadata(self.state.general_params)
-                plugin.scan_metadata(self.state.pair_params[name])
-                assert not plugin.get_missing_keys()
-                plugins_testing.append(plugin.build_plugin())
+                    plugin.scan_metadata(self.state.general_params)
+                    plugin.scan_metadata(self.state.pair_params[name])
+                    assert not plugin.get_missing_keys()
+                    plugins_testing.append(plugin.build_plugin())
+
         self.state.set(test_sites=test_sites_ordered)
+
         if plugins_fixed:
             for fixed_plugin in plugins_fixed:
-                self.workflow.add_dependency([fixed_plugin] * self.get("num_test_sites"))
-        self.workflow.add_dependency(plugins_testing)
+                if pair_parameters.get("phase") == "production":
+                    self.workflow.add_dependency(fixed_plugin)
+                else:
+                    self.workflow.add_dependency([fixed_plugin] * self.get("num_test_sites"))
+                    print("hit a method I didn't want")
+        if plugins_testing:
+            self.workflow.add_dependency(plugins_testing)
 
     def clean_plugins(self):
-        self.workflow = gmx.workflow.from_tpr([self.get("tpr")] * self.get("num_test_sites"), append_output=False)
+        #num_test_sites = self.get("num_test_sites")
+        phase = self.state.get("phase", site_name=self.state.names[0])
+        if phase == "production":
+            end_time = self.state.get('production_time') + self.state.get('start_time')
+            print(end_time)
+            self.workflow = gmx.workflow.from_tpr(self.get("tpr"), end_time=end_time, append_output=False)
+        else:
+            self.workflow = gmx.workflow.from_tpr([self.get("tpr")] * self.get("num_test_sites"), append_output=False)
 
     def run(self):
         gmx.run(work=self.workflow)

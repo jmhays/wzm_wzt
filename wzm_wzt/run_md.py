@@ -21,7 +21,7 @@ comm = MPI.COMM_WORLD
 
 
 def configure_logging(filename):
-    logger = logging.getLogger("my logger")
+    logger = logging.getLogger("WZM-WZT")
     logger.setLevel(logging.DEBUG)
     # Format for our loglines
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -98,8 +98,10 @@ class Simulation():
         gmxapi_config.load_state(state)
 
         self.gmxapi = gmxapi_config
+
         self.gmxapi.state.write_to_json()
         self.logger = configure_logging("{}/{}.log".format(ensemble_dir, ensemble_num))
+        self.__parallel_log("The number of sites: {}".format(self.gmxapi.get("num_test_sites")))
         self.__parallel_log("Set up simulation with state: {}".format(self.gmxapi.state.get_as_dictionary()))
 
     def __parallel_log(self, message, level="info"):
@@ -123,12 +125,18 @@ class Simulation():
         """Run the gmxapi workflow.
         """
         self.gmxapi.change_to_test_directory()
+        # TODO: if the phase is training, do the resampling
         workdir_list = []
         test_sites = self.gmxapi.state.get("test_sites")
-        for test_site in test_sites:
-            workdir_list.append("{}/{}/{}".format(os.getcwd(), test_site,
-                                                  self.gmxapi.state.get("phase", site_name=test_site)))
-
+        print(test_sites)
+        if test_sites:
+            for test_site in test_sites:
+                workdir_list.append("{}/{}/{}".format(os.getcwd(), test_site,
+                                                      self.gmxapi.state.get("phase", site_name=test_site)))
+        else:
+            self.gmxapi.helper.change_dir("num_test_sites")
+            workdir_list = ["{}/production".format(os.getcwd())]
+        print(workdir_list)
         context = gmx.context.ParallelArrayContext(self.gmxapi.workflow, workdir_list=workdir_list)
         with context as session:
             session.run()
@@ -136,48 +144,92 @@ class Simulation():
         comm.Barrier()
         self.__parallel_log("The MD portion of the simulation has finished.")
 
-        for test_site in test_sites:
-            site_name = test_site
-            phase = self.gmxapi.state.get("phase", site_name=site_name)
-            if phase == "training":
+    def post_process(self):
+        phase = self.gmxapi.state.get("phase", site_name=self.gmxapi.state.names[0])
+
+        if phase == "training":
+            test_sites = self.gmxapi.state.get("test_sites")
+            assert test_sites
+            for test_site in test_sites:
                 # Get alpha.
                 # TODO: pull this from the context.
-                self.gmxapi.helper.change_dir(level="phase", test_site=site_name, phase=phase)
-                log_file = "{}.log".format(site_name)
+                self.gmxapi.helper.change_dir(level="phase", test_site=test_site, phase=phase)
+                log_file = "{}.log".format(test_site)
                 if not os.path.exists(log_file):
                     raise FileNotFoundError("The log file {} was not written properly".format(log_file))
-
                 with open(log_file, "r") as fh:
                     for line in fh:
                         pass
                     alpha = float(line.split()[5])
-                    self.gmxapi.state.set(alpha=alpha, site_name=site_name)
-                self.gmxapi.state.set(phase="convergence", site_name=site_name)
-            elif phase == "convergence":
-                self.gmxapi.state.set(phase="production", site_name=site_name)
+                    self.gmxapi.state.set(alpha=alpha, site_name=test_site)
+                self.gmxapi.state.set(phase="convergence", site_name=test_site)
+
+        elif phase == "convergence":
+            test_sites = self.gmxapi.state.get("test_sites")
+            assert test_sites
+            fixed_site = self.re_sample()
+
+            for test_site in test_sites:
+                # Get alpha.
+                # TODO: pull this from the context.
+                self.gmxapi.helper.change_dir(level="phase", test_site=test_site, phase=phase)
+                log_file = "{}.log".format(test_site)
+
+                if not os.path.exists(log_file):
+                    raise FileNotFoundError("The log file {} was not written properly".format(log_file))
+
+                if test_site == fixed_site:
+                    on = True
+                else:
+                    on = False
+                self.gmxapi.state.set(phase="production", testing=False, on=on, site_name=test_site)
+            
+            self.gmxapi.change_to_test_directory()
+            log_files = ["{}/convergence/{}.log".format(test_site, test_site) for test_site in test_sites]
+            self.gmxapi.state.set(start_time=final_time(log_files), test_sites=[])
+
+        elif phase == "production":
+            for name in self.gmxapi.state.names:
+                self.gmxapi.state.set(phase="training", site_name=name)
+
+        else:
+            raise ValueError(
+                "{} is not a valid phase: must be one of 'training', 'convergence', or 'production'".format(phase))
 
         comm.Barrier()
         self.__parallel_log("Phases have been set to: {}".format(" ".join(
-            [self.gmxapi.state.get("phase", site_name=site_name) for site_name in test_sites])))
-
-        # If we've moved on to production, we have to pick one site to restrain
-        if phase == "production":
-            fixed_site = self.re_sample()
-            self.__parallel_log("Completed resampling procedure and have a selected {}".format(fixed_site))
-            self.gmxapi.state.set(site_name=fixed_site, on=1, testing=0)
+            [self.gmxapi.state.get("phase", site_name=site_name) for site_name in self.gmxapi.state.names])))
 
         self.gmxapi.state.write_to_json()
 
     def re_sample(self):
-        next_site = ""
+        next_site = " "
         if comm.Get_rank() == 0:
             test_sites = self.gmxapi.state.get("test_sites")
             self.gmxapi.change_to_test_directory()
             log_files = ["{}/convergence/{}.log".format(test_site, test_site) for test_site in test_sites]
-            _, probs = work_calculation(log_files)
+            work, probs = work_calculation(log_files)
+            self.__parallel_log("Work: {}".format(work))
+            self.__parallel_log("Probabilities: {}".format(probs))
             next_site = np.random.choice(a=list(probs.keys()), p=list(probs.values()))
-        comm.bcast(next_site, root=0)
+        next_site = comm.bcast(next_site, root=0)
         return next_site
+
+
+def final_time(log_files: list):
+    max_time = 0
+    print(os.getcwd())
+    if comm.Get_rank() == 0:
+        for fnm in log_files:
+            # Find the final time
+            with open(fnm) as fh:
+                for line in fh:
+                    pass
+                final_time = float(line.split()[0])
+                if final_time > max_time:
+                    max_time = final_time
+    max_time = comm.bcast(max_time, root=0)
+    return max_time
 
 
 def work_calculation(log_files: list):
@@ -194,17 +246,24 @@ def work_calculation(log_files: list):
                 if not newline:
                     break
                 splitline = newline.split()
-                r, alpha = float(splitline[1]), float(splitline[3])
+                r, target, alpha = float(splitline[1]), float(splitline[2]), float(splitline[3])
                 data.append([r, alpha])
         data = np.array(data)
         delta_x = np.sum(np.abs(data[1:, 0] - data[:-1, 0]))
 
+        force_constant = alpha / target  # kJ/nm/mol
         # Now the actual work value:
-        work[site_name] = delta_x * alpha
+        work[site_name] = delta_x * force_constant
 
-    z = np.sum(list(work.values()))
+    boltzmann = {}
+    RT = 2.479  # kJ/mol
+
+    for site_name in work.keys():
+        boltzmann[site_name] = np.exp(-work[site_name] / RT)
+
+    z = np.sum(list(boltzmann.values()))
     probs = {}
     for site_name in work:
-        probs[site_name] = work[site_name] / z
+        probs[site_name] = boltzmann[site_name] / z
 
     return work, probs

@@ -68,7 +68,10 @@ class DirectoryHelper():
             if required not in param_dict:
                 raise KeyError('Must define {}'.format(required))
         self._param_dict = param_dict
-        self._param_dict['num_test_sites'] = len(self._param_dict['test_sites'])
+        if "num_test_sites" in param_dict:
+            self._param_dict['num_test_sites'] = param_dict['num_test_sites']
+        else:
+            self._param_dict['num_test_sites'] = len(self._param_dict['test_sites'])
 
     def get_dir(self, level, test_site=None, phase=None):
         """Get the directory for however far you want to go down the directory

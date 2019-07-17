@@ -112,7 +112,7 @@ class ProductionPluginConfig(PluginConfig):
     def __init__(self):
         super().__init__()
         self.set_name('production')
-        self.set_requirements(['sites', 'target', 'alpha', 'sample_period', 'logging_filename'])
+        self.set_requirements(['sites', 'target', 'alpha', 'sample_period', 'production_time', 'logging_filename'])
 
     def build_plugin(self):
         """Build gmxapi potential for production simulations."""

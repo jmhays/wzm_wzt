@@ -88,7 +88,7 @@ class PairParams(MetaData):
         """Set all of the pair parameters to their default values if they have
         defaults: sites, logging_filename, and name will not have default
         values."""
-        self.set(phase='training', alpha=0.0, target=3.0, on=False, testing=True)
+        self.set(phase='training', alpha=0.0, target=3.0, on=True, testing=True)
 
 
 class State(MetaData):
