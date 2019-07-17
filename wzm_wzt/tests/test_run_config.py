@@ -24,7 +24,8 @@ def test_gmxapi_config_1(data_dir, tmpdir, state_dict):
 
     assert not gmx_config.state.get_missing_keys()
     gmx_config.change_to_test_directory()
-    gmx_config.build_plugins()
+    with pytest.warns(Warning):
+        gmx_config.build_plugins()
 
     state.pair_params['3673_12035'].set(on=True, testing=True, phase="training")
     state.write_to_json()
@@ -46,35 +47,10 @@ def test_gmxapi_config_2(data_dir, tmpdir, state_dict):
 
     assert not gmx_config.state.get_missing_keys()
     gmx_config.change_to_test_directory()
+    gmx_config.initialize_workflow()
     gmx_config.build_plugins()
 
     #print(gmx_config.workflow.workspec)
 
     state.pair_params['3673_12035'].set(on=True, testing=True, phase="training")
     state.write_to_json()
-
-
-# def test_gmxapi_run(data_dir, tmpdir, state_dict):
-#     gmx_config_defaults = {'tpr': '{}/wzmwzt.tpr'.format(data_dir), 'ensemble_dir': tmpdir, 'ensemble_num': 0}
-#     gmx_config = gmxapiConfig()
-#     gmx_config.set_from_dictionary(gmx_config_defaults)
-#     #assert not gmx_config.get_missing_keys()
-
-#     # Set up a state object
-#     state = State(filename="{}/state.json".format(gmx_config_defaults["ensemble_dir"]))
-#     state.set_from_dictionary(state_dict)
-
-#     assert not state.get_missing_keys()
-#     for pair in state.pair_params:
-#         assert not state.pair_params[pair].get_missing_keys()
-
-#     gmx_config.initialize(state)
-#     assert not gmx_config.state.get_missing_keys()
-
-#     site_name = '3673_5636'
-#     current_dir = os.getcwd()
-#     gmx_config.change_to_test_directory(site_name)
-#     with pytest.warns(Warning):
-#         gmx_config.build_plugins(site_name)
-#     #gmx_config.run()
-#     os.chdir(current_dir)

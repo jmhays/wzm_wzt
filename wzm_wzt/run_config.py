@@ -16,6 +16,7 @@ class gmxapiConfig(MetaData):
         self.set_requirements(["tpr", "ensemble_dir", "ensemble_num", "test_sites", "num_test_sites"])
         self.state = None
         self.helper = None
+        self.workflow = None
 
     def load_state(self, state: State):
         self.state = state
@@ -93,6 +94,10 @@ class gmxapiConfig(MetaData):
                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
 
     def build_plugins(self):
+        if not self.workflow:
+            warnings.warn("You have not initialized a workflow. Automatically setting one up for you...")
+            self.initialize_workflow()
+
         all_pair_params = self.state.pair_params
         plugins_testing = []
         plugins_fixed = []
@@ -136,8 +141,7 @@ class gmxapiConfig(MetaData):
         if plugins_testing:
             self.workflow.add_dependency(plugins_testing)
 
-    def clean_plugins(self):
-        #num_test_sites = self.get("num_test_sites")
+    def initialize_workflow(self):
         phase = self.state.get("phase", site_name=self.state.names[0])
         if phase == "production":
             end_time = self.state.get('production_time') + self.state.get('start_time')
