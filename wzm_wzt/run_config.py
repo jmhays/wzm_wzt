@@ -106,10 +106,8 @@ class gmxapiConfig(MetaData):
         # First add the production plugins to all members of the simulation.
         for name in all_pair_params:
             pair_parameters = all_pair_params[name]
-            print("Pair Parameter: {}".format(name))
             # If the pair is being restrained but is not part of the testing, then it should be restrained by linear potential.
             if pair_parameters.get("on"):
-                print("pair parameter {} is on".format(name))
                 if not pair_parameters.get("testing"):
                     assert pair_parameters.get("phase") == "production"
                     plugin = ProductionPluginConfig()
@@ -137,7 +135,6 @@ class gmxapiConfig(MetaData):
                     self.workflow.add_dependency(fixed_plugin)
                 else:
                     self.workflow.add_dependency([fixed_plugin] * self.get("num_test_sites"))
-                    print("hit a method I didn't want")
         if plugins_testing:
             self.workflow.add_dependency(plugins_testing)
 
@@ -145,7 +142,6 @@ class gmxapiConfig(MetaData):
         phase = self.state.get("phase", site_name=self.state.names[0])
         if phase == "production":
             end_time = self.state.get('production_time') + self.state.get('start_time')
-            print(end_time)
             self.workflow = gmx.workflow.from_tpr(self.get("tpr"), end_time=end_time, append_output=False)
         else:
             self.workflow = gmx.workflow.from_tpr([self.get("tpr")] * self.get("num_test_sites"), append_output=False)

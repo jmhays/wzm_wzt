@@ -218,7 +218,6 @@ class Simulation():
 
 def final_time(log_files: list):
     max_time = 0
-    print(os.getcwd())
     if comm.Get_rank() == 0:
         for fnm in log_files:
             # Find the final time

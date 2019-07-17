@@ -1,6 +1,6 @@
 import pytest
 
-from wzm_wzt.run_md import Simulation
+from wzm_wzt.run_md import Simulation, final_time
 from wzm_wzt.metadata import site_to_str
 import os
 import logging
@@ -55,3 +55,13 @@ def test_resampling(tmpdir, data_dir, simulation):
 
     # Finally, do the actual resampling!
     simulation.re_sample()
+
+def test_final_time(tmpdir, data_dir, simulation):
+    # Make a directory structure that can support the resampling operation
+    simulation.gmxapi.change_to_test_directory()
+
+    # Move and rename some existing log files to mimic what might be found in a real run
+    logs_data_dir = glob.glob("{}/convergence/*.log".format(data_dir))
+
+    time = final_time(logs_data_dir)
+    assert time == 259.356
