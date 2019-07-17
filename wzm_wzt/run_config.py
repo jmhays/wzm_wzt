@@ -41,10 +41,8 @@ class gmxapiConfig(MetaData):
         if test_num_test_sites == 0:
             assert phase == "production"
             num_test_sites = len(self.state.pair_params) - sites_on + 1
-            tprs = self.get("tpr")
         else:
             num_test_sites = test_num_test_sites
-            tprs = [self.get("tpr")] * num_test_sites
 
         self.set(num_test_sites=num_test_sites)
 

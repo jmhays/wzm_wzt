@@ -118,7 +118,7 @@ class Simulation():
             Delete all previous plugins?, by default False
         """
         if clean:
-            self.gmxapi.clean_plugins()
+            self.gmxapi.initialize_workflow()
         self.gmxapi.build_plugins()
 
     def run(self):
