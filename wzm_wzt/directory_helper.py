@@ -122,7 +122,10 @@ class DirectoryHelper():
         """
 
         for site in self._param_dict['test_sites']:
-            site_name = site_to_str(site)
+            if type(site) != str:
+                site_name = site_to_str(site)
+            else:
+                site_name = site
             for phase in ['training', 'convergence']:
                 os.makedirs(self.get_dir(level='phase', test_site=site_name, phase=phase), exist_ok=True)
         os.makedirs('{}/production'.format(self.get_dir('num_test_sites')), exist_ok=True)

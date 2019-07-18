@@ -46,7 +46,7 @@ def test_resampling(tmpdir, data_dir, simulation):
 
     counter = 0
     for site in simulation.gmxapi.get("test_sites"):
-        name = site_to_str(site)
+        name = site
         shutil.copy(logs_data_dir[counter], "{}/convergence/{}.log".format(name, name))
         if counter == len(logs_data_dir) - 1:
             counter = 0

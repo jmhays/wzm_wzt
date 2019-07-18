@@ -5,6 +5,7 @@
 from wzm_wzt.metadata import MetaData, site_to_str, backup_file
 from wzm_wzt.experimental_data import ExperimentalData
 import warnings
+import numpy
 import json
 import os
 from mpi4py import MPI
@@ -108,6 +109,12 @@ class State(MetaData):
         self.pair_params = {}
         self.json = filename
         self.names = []
+    
+    def re_sample_targets(self):
+        distribution = self.get('distribution')
+        bins = self.get('bins')
+        normalized = numpy.divide(distribution, numpy.sum(distribution))
+        return numpy.random.choice(bins, p=normalized)
 
     def set(self, site_name=None, **kwargs):
         for key, value in kwargs.items():
