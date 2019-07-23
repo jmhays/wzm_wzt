@@ -96,7 +96,7 @@ class Simulation():
         gmxapi_config = gmxapiConfig()
         gmxapi_config.set_from_dictionary(gmx_config_parameters)
         gmxapi_config.load_state(state)
-        
+
         test_sites = gmxapi_config.state.get("test_sites")
         phases = [gmxapi_config.state.get("phase", site_name=test_site) for test_site in test_sites]
         if "training" in phases:
@@ -109,8 +109,8 @@ class Simulation():
                 gmxapi_config.state.set(target=target, site_name=test_site)
         self.gmxapi = gmxapi_config
 
-       # print("Hello from rank {}! Test sites are: {}".format(comm.Get_rank(), self.gmxapi.state.get("test_sites")))
-        
+        # print("Hello from rank {}! Test sites are: {}".format(comm.Get_rank(), self.gmxapi.state.get("test_sites")))
+
         self.gmxapi.state.write_to_json()
         self.logger = configure_logging("{}/{}.log".format(ensemble_dir, ensemble_num))
         self.__parallel_log("The number of sites: {}".format(self.gmxapi.get("num_test_sites")))
@@ -151,7 +151,7 @@ class Simulation():
         else:
             self.gmxapi.helper.change_dir("num_test_sites")
             workdir_list = ["{}/production".format(os.getcwd())]
-        context = gmx.context.ParallelArrayContext(self.gmxapi.workflow, workdir_list=workdir_list)
+        context = gmx.context.ParallelArrayContext(self.gmxapi.workflow, workdir_list=workdir_list, communicator=comm)
         with context as session:
             session.run()
 

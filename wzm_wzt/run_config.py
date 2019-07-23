@@ -65,34 +65,6 @@ class gmxapiConfig(MetaData):
         self.helper.build_working_dir()
         self.helper.change_dir(level='num_test_sites')
 
-    # def move_cpt(self, site_name):
-    #     current_iter = self.state.get('iteration')
-    #     phase = self.state.get('phase', site_name=site_name)
-
-    #     # If the cpt already exists, don't overwrite it
-    #     if os.path.exists("{}/state.cpt".format(self.helper.get_dir('phase'))):
-    #         print("Phase is {} and state.cpt already exists: not moving any files".format(phase))
-
-    #     else:
-    #         member_dir = self.helper.get_dir('ensemble_num')
-    #         prev_iter = current_iter - 1
-    #         prev_num_test_sites = self.helper._param_dict["num_test_sites"] + 1
-
-    #         if phase in ['training', 'convergence']:
-    #             if prev_iter > -1:
-    #                 # Get the production cpt from previous iteration
-    #                 gmx_cpt = '{}/{}/num_test_sites_{}/{}/production/state.cpt'.format(
-    #                     member_dir, prev_iter, prev_num_test_sites, site_name)
-    #                 shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
-
-    #             else:
-    #                 pass  # Do nothing
-
-    #         else:
-    #             # Get the convergence cpt from current iteration
-    #             gmx_cpt = '{}/{}/convergence/state.cpt'.format(member_dir, current_iter)
-    #             shutil.copy(gmx_cpt, '{}/state.cpt'.format(os.getcwd()))
-
     def build_plugins(self):
         if not self.workflow:
             warnings.warn("You have not initialized a workflow. Automatically setting one up for you...")
