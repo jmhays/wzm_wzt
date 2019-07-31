@@ -21,6 +21,8 @@ comm = MPI.COMM_WORLD
 
 
 def configure_logging(filename):
+    root_logger = logging.getLogger()
+
     logger = logging.getLogger("WZM-WZT")
     logger.setLevel(logging.INFO)
     # Format for our loglines
@@ -29,12 +31,12 @@ def configure_logging(filename):
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
     ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    root_logger.addHandler(ch)
     # Setup file logging as well
     fh = logging.FileHandler(filename)
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    root_logger.addHandler(fh)
     return logger
 
 

@@ -12,6 +12,7 @@ from mpi4py import MPI
 
 comm = MPI.COMM_WORLD
 
+
 class gmxapiConfig(MetaData):
     def __init__(self):
         super().__init__("gmxapi_config")
@@ -121,7 +122,7 @@ class gmxapiConfig(MetaData):
         phases = [self.state.get("phase", site_name=name) for name in self.state.names]
 
         args_for_from_tpr = {"append_output": False}
-        
+
         if comm.Get_rank() == 0:
             if ntmpi:
                 args_for_from_tpr["ntmpi"] = ntmpi
@@ -133,7 +134,7 @@ class gmxapiConfig(MetaData):
                 end_time = self.state.get('production_time') + self.state.get('start_time')
                 args_for_from_tpr["end_time"] = end_time
                 tprs = self.get("tpr")
-        
+
         args_for_from_tpr = comm.bcast(args_for_from_tpr, root=0)
 
         self.workflow = gmx.workflow.from_tpr(tprs, **args_for_from_tpr)
