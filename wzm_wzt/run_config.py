@@ -9,6 +9,7 @@ from wzm_wzt.metadata import MetaData
 from wzm_wzt.directory_helper import DirectoryHelper
 from wzm_wzt.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig, ProductionPluginConfig
 
+
 class gmxapiConfig(MetaData):
     def __init__(self):
         super().__init__("gmxapi_config")
@@ -29,7 +30,7 @@ class gmxapiConfig(MetaData):
                 sites_on += 1
             if pair_params.get("testing"):
                 test_sites.append(site_name)
-                
+
         self._metadata["test_sites"] = test_sites
         self.state.set(test_sites=test_sites)
 
@@ -37,7 +38,7 @@ class gmxapiConfig(MetaData):
 
         # Check that we're not missing anything...
         assert (not self.state.get_missing_keys())
-        
+
         test_num_test_sites = len(self.state.get("test_sites"))
         # Now we need to correct in case the number of test sites is zero (meaning we're in production)
         if test_num_test_sites == 0:
@@ -114,13 +115,23 @@ class gmxapiConfig(MetaData):
         if plugins_testing:
             self.workflow.add_dependency(plugins_testing)
 
-    def initialize_workflow(self):
+    def initialize_workflow(self, ntmpi=None):
         phases = [self.state.get("phase", site_name=name) for name in self.state.names]
+
+        args_for_from_tpr = {"append_output": False}
+
+        if ntmpi:
+            args_for_from_tpr["ntmpi"] = ntmpi
+
         if "training" in phases or "convergence" in phases:
-            self.workflow = gmx.workflow.from_tpr([self.get("tpr")] * self.get("num_test_sites"), append_output=False)
+            tprs = [self.get("tpr")] * self.get("num_test_sites")
+
         else:
             end_time = self.state.get('production_time') + self.state.get('start_time')
-            self.workflow = gmx.workflow.from_tpr(self.get("tpr"), end_time=end_time, append_output=False)
+            args_for_from_tpr["end_time"] = end_time
+            tprs = self.get("tpr")
+
+        self.workflow = gmx.workflow.from_tpr(tprs, **args_for_from_tpr)
 
     def run(self):
         gmx.run(work=self.workflow)
