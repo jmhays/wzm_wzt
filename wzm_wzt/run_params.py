@@ -134,7 +134,7 @@ class State(MetaData):
         if key in self.general_params.get_requirements():
             answer = self.general_params.get(key)
         elif key == "test_sites":
-            answer = self._metadata[key]
+            answer = sorted(self._metadata[key])
         elif site_name:
             answer = self.pair_params[site_name].get(key)
         else:
