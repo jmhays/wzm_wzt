@@ -8,7 +8,9 @@ from wzm_wzt.run_params import State
 from wzm_wzt.metadata import MetaData
 from wzm_wzt.directory_helper import DirectoryHelper
 from wzm_wzt.plugin_configs import TrainingPluginConfig, ConvergencePluginConfig, ProductionPluginConfig
+from mpi4py import MPI
 
+comm = MPI.COMM_WORLD
 
 class gmxapiConfig(MetaData):
     def __init__(self):
@@ -119,17 +121,20 @@ class gmxapiConfig(MetaData):
         phases = [self.state.get("phase", site_name=name) for name in self.state.names]
 
         args_for_from_tpr = {"append_output": False}
+        
+        if comm.Get_rank() == 0:
+            if ntmpi:
+                args_for_from_tpr["ntmpi"] = ntmpi
 
-        if ntmpi:
-            args_for_from_tpr["ntmpi"] = ntmpi
+            if "training" in phases or "convergence" in phases:
+                tprs = [self.get("tpr")] * self.get("num_test_sites")
 
-        if "training" in phases or "convergence" in phases:
-            tprs = [self.get("tpr")] * self.get("num_test_sites")
-
-        else:
-            end_time = self.state.get('production_time') + self.state.get('start_time')
-            args_for_from_tpr["end_time"] = end_time
-            tprs = self.get("tpr")
+            else:
+                end_time = self.state.get('production_time') + self.state.get('start_time')
+                args_for_from_tpr["end_time"] = end_time
+                tprs = self.get("tpr")
+        
+        args_for_from_tpr = comm.bcast(args_for_from_tpr, root=0)
 
         self.workflow = gmx.workflow.from_tpr(tprs, **args_for_from_tpr)
 
