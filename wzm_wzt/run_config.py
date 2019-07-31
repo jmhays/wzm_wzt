@@ -81,7 +81,7 @@ class gmxapiConfig(MetaData):
         phases = []
 
         # First add the production plugins to all members of the simulation.
-        for name in all_pair_params:
+        for name in sorted(list(all_pair_params.keys())):
             pair_parameters = all_pair_params[name]
             # If the pair is being restrained but is not part of the testing, then it should be restrained by linear potential.
             if pair_parameters.get("on"):
@@ -107,7 +107,8 @@ class gmxapiConfig(MetaData):
                     assert not plugin.get_missing_keys()
                     plugins_testing.append(plugin.build_plugin())
 
-        self.state.set(test_sites=test_sites_ordered)
+        assert test_sites_ordered == self.state.get("test_sites")
+        #self.state.set(test_sites=test_sites_ordered)
 
         if plugins_fixed:
             for fixed_plugin in plugins_fixed:

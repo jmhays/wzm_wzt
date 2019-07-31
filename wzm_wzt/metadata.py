@@ -116,6 +116,9 @@ class MetaData(ABC):
         -------
 
         """
+        if type(self._metadata[key]) == list:
+            self._metadata[key] = sorted(self._metadata[key])
+            
         return self._metadata[key]
 
     def set_from_dictionary(self, data):
