@@ -4,6 +4,7 @@ Wzm-Wzt BRER."""
 import gmx
 import os, shutil
 import warnings
+import numpy
 from wzm_wzt.run_params import State
 from wzm_wzt.metadata import MetaData
 from wzm_wzt.directory_helper import DirectoryHelper
@@ -75,26 +76,29 @@ class gmxapiConfig(MetaData):
             self.initialize_workflow()
 
         all_pair_params = self.state.pair_params
-        plugins_testing = []
-        plugins_fixed = []
-        test_sites_ordered = []
+        names = sorted(list(all_pair_params.keys()))
+
+        plugins_testing = {}
+        plugins_fixed = {}
         phases = []
 
         # First add the production plugins to all members of the simulation.
-        for name in sorted(list(all_pair_params.keys())):
+        for name in names:
             pair_parameters = all_pair_params[name]
             # If the pair is being restrained but is not part of the testing, then it should be restrained by linear potential.
             if pair_parameters.get("on"):
                 if not pair_parameters.get("testing"):
                     assert pair_parameters.get("phase") == "production"
                     phases.append("production")
+
                     plugin = ProductionPluginConfig()
                     plugin.scan_metadata(self.state.general_params)
                     plugin.scan_metadata(self.state.pair_params[name])
                     assert not plugin.get_missing_keys()
-                    plugins_fixed.append(plugin.build_plugin())
+
+                    plugins_fixed[name] = plugin.build_plugin()
+
                 else:
-                    test_sites_ordered.append(name)
                     if pair_parameters.get("phase") == "training":
                         plugin = TrainingPluginConfig()
                         phases.append("training")
@@ -105,19 +109,21 @@ class gmxapiConfig(MetaData):
                     plugin.scan_metadata(self.state.general_params)
                     plugin.scan_metadata(self.state.pair_params[name])
                     assert not plugin.get_missing_keys()
-                    plugins_testing.append(plugin.build_plugin())
 
-        assert test_sites_ordered == self.state.get("test_sites")
-        #self.state.set(test_sites=test_sites_ordered)
+                    plugins_testing[name] = plugin.build_plugin()
 
         if plugins_fixed:
-            for fixed_plugin in plugins_fixed:
+            for fixed_plugin in plugins_fixed.values():
                 if "training" in phases or "convergence" in phases:
                     self.workflow.add_dependency([fixed_plugin] * self.get("num_test_sites"))
                 else:
                     self.workflow.add_dependency(fixed_plugin)
         if plugins_testing:
-            self.workflow.add_dependency(plugins_testing)
+            assert sorted(list(plugins_testing.keys())) == self.get("test_sites")
+            plugins_testing_list = []
+            for test_site in self.get("test_sites"):
+                plugins_testing_list.append(plugins_testing[test_site])
+            self.workflow.add_dependency(plugins_testing_list)
 
     def initialize_workflow(self, ntmpi=None):
         phases = [self.state.get("phase", site_name=name) for name in self.state.names]
