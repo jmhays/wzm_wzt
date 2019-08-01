@@ -5,6 +5,7 @@ import gmx
 import os, shutil
 import warnings
 import numpy
+import logging
 from wzm_wzt.run_params import State
 from wzm_wzt.metadata import MetaData
 from wzm_wzt.directory_helper import DirectoryHelper
@@ -144,6 +145,9 @@ class gmxapiConfig(MetaData):
 
         args_for_from_tpr = comm.bcast(args_for_from_tpr, root=0)
         tprs = comm.bcast(tprs, root=0)
+        logging.getLogger("WZM-WZT").debug(
+            "Rank {} will pass tprs: {} and arguments: {} to gmx.workflow.from_tpr".format(
+                comm.Get_rank(), tprs, args_for_from_tpr))
         self.workflow = gmx.workflow.from_tpr(tprs, **args_for_from_tpr)
 
     def run(self):

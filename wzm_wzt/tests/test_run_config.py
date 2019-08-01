@@ -54,3 +54,6 @@ def test_gmxapi_config_2(data_dir, tmpdir, state_dict):
 
     state.pair_params['3673_12035'].set(on=True, testing=True, phase="training")
     state.write_to_json()
+
+def test_initialize_workflow(data_dir, tmpdir, simulation):
+    simulation.gmxapi.initialize_workflow(ntmpi=4)
