@@ -61,7 +61,7 @@ def test_final_time(tmpdir, data_dir, simulation):
     simulation.gmxapi.change_to_test_directory()
 
     # Move and rename some existing log files to mimic what might be found in a real run
-    logs_data_dir = glob.glob("{}/convergence/*.log".format(data_dir))
+    log = "{}/convergence/052_210.log".format(data_dir)
 
-    time = final_time(logs_data_dir)
+    time = final_time(log)
     assert time == 259.356
