@@ -71,10 +71,10 @@ class gmxapiConfig(MetaData):
         self.helper.build_working_dir()
         self.helper.change_dir(level='num_test_sites')
 
-    def build_plugins(self):
+    def build_plugins(self, mdrun_args={}):
         if not self.workflow:
             warnings.warn("You have not initialized a workflow. Automatically setting one up for you...")
-            self.initialize_workflow()
+            self.initialize_workflow(mdrun_args=mdrun_args)
 
         all_pair_params = self.state.pair_params
         names = sorted(list(all_pair_params.keys()))
@@ -126,14 +126,14 @@ class gmxapiConfig(MetaData):
                 plugins_testing_list.append(plugins_testing[test_site])
             self.workflow.add_dependency(plugins_testing_list)
 
-    def initialize_workflow(self, ntmpi=None):
+    def initialize_workflow(self, mdrun_args={}):
         phases = [self.state.get("phase", site_name=name) for name in self.state.names]
 
         args_for_from_tpr = {"append_output": False}
         tprs = None
         if comm.Get_rank() == 0:
-            if ntmpi:
-                args_for_from_tpr["ntmpi"] = ntmpi
+            for key, value in mdrun_args.items():
+                args_for_from_tpr[key] = value
 
             if "training" in phases or "convergence" in phases:
                 tprs = [self.get("tpr")] * self.get("num_test_sites")

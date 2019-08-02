@@ -24,7 +24,7 @@ def configure_logging(filename):
     root_logger = logging.getLogger()
 
     logger = logging.getLogger("WZM-WZT")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     # Format for our loglines
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     # Setup console logging
@@ -44,7 +44,7 @@ class Simulation():
     """Run Wzm-Wzt simulations
     """
 
-    def __init__(self, tpr, ensemble_dir, ensemble_num, site_filename, deer_data_filename):
+    def __init__(self, tpr, ensemble_dir, ensemble_num, site_filename, deer_data_filename, mdrun_args={}):
         """Initialize the run.
         
         Parameters
@@ -59,6 +59,8 @@ class Simulation():
             path to json file containing atom ids for restraints
         deer_data_filename : str
             path to json file containing DEER data for restraints.
+        mdrun_args : dict
+            dictionary of mdrun commandline arguments. 
         """
         sites = json.load(open(site_filename))
         deer_data = json.load(open(deer_data_filename))
@@ -118,6 +120,8 @@ class Simulation():
         self.__parallel_log("The number of sites: {}".format(self.gmxapi.get("num_test_sites")))
         self.__parallel_log("Set up simulation with state: {}".format(self.gmxapi.state.get_as_dictionary()),
                             level="debug")
+        self.mdrun_args = mdrun_args
+        self.__parallel_log("mdrun commandline arguments: {}".format(mdrun_args), level='debug')
 
     def __parallel_log(self, message, level="info"):
         if comm.Get_rank() == 0:
@@ -135,7 +139,7 @@ class Simulation():
             Delete all previous plugins?, by default False
         """
         if clean:
-            self.gmxapi.initialize_workflow()
+            self.gmxapi.initialize_workflow(self.mdrun_args)
         self.gmxapi.build_plugins()
 
     def run(self):

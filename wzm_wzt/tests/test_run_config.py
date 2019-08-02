@@ -56,4 +56,5 @@ def test_gmxapi_config_2(data_dir, tmpdir, state_dict):
     state.write_to_json()
 
 def test_initialize_workflow(data_dir, tmpdir, simulation):
-    simulation.gmxapi.initialize_workflow(ntmpi=4)
+    mdrun_args = {'ntmpi': 4}
+    simulation.gmxapi.initialize_workflow(mdrun_args)
