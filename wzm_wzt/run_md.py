@@ -232,16 +232,16 @@ class Simulation():
             self.__parallel_log("Writing cpt to {}".format(training_cpt))
 
     def post_process(self):
-        phase = self.gmxapi.state.get("phase", site_name=self.gmxapi.state.names[0])
-        if phase == "training":
+        phases = [self.gmxapi.state.get("phase", site_name=name) for name in self.gmxapi.state.names]
+        if "training" in phases:
             self.__training_pp()
-        elif phase == "convergence":
+        elif "convergence" in phases:
             self.__convergence_pp()
-        elif phase == "production":
+        elif all(phase == "production" for phase in phases):
             self.__production_pp()
         else:
             raise ValueError(
-                "{} is not a valid phase: must be one of 'training', 'convergence', or 'production'".format(phase))
+                "{} is not a valid set of phases".format(phases))
 
         comm.Barrier()
         self.__parallel_log("Phases have been set to: {}".format(" ".join(
