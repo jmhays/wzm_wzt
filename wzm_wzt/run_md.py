@@ -221,15 +221,17 @@ class Simulation():
         #TODO: don't store the test sites in two places!!
         self.gmxapi.set(test_sites=test_sites)
         self.gmxapi.state.set(test_sites=test_sites)
-        # Move the checkpoint to the new training directories.
+        # Move the checkpoint to the new training and convergence directories.
         production_cpt = "{}/production/state.cpt".format(os.getcwd())
-        # Change to the new test directory
         self.gmxapi.change_to_test_directory()
         training_cpts = ["{}/{}/training/state.cpt".format(os.getcwd(), test_site) for test_site in test_sites]
-
+        convergence_cpts = ["{}/{}/convergence/state.cpt".format(os.getcwd(), test_site) for test_site in test_sites]
         for training_cpt in training_cpts:
             shutil.copy(production_cpt, training_cpt)
-            self.__parallel_log("Writing cpt to {}".format(training_cpt))
+            self.__parallel_log("Writing cpt {} to {}".format(production_cpt, training_cpt))
+        for convergence_cpt in convergence_cpts:
+            shutil.copy(production_cpt, convergence_cpt)
+            self.__parallel_log("Writing cpt {} to {}".format(production_cpt, convergence_cpt))
 
     def post_process(self):
         phases = [self.gmxapi.state.get("phase", site_name=name) for name in self.gmxapi.state.names]
