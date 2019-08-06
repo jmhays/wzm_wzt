@@ -196,8 +196,8 @@ class Simulation():
             self.gmxapi.state.set(phase="production", testing=False, on=on, site_name=test_site)
 
         # Get the production start_time from the final log files
-        log_file = "{}/convergence/{}.log".format(fixed_site, fixed_site)
-        self.gmxapi.state.set(start_time=final_time(log_file), test_sites=[])
+        log_files = ["{}/convergence/{}.log".format(test_site, test_site) for test_site in test_sites]
+        self.gmxapi.state.set(start_time=final_time(log_files), test_sites=[])
 
         # Move the checkpoint to the production directory
         convergence_cpt = "{}/{}/convergence/state.cpt".format(os.getcwd(), fixed_site)
@@ -266,16 +266,19 @@ class Simulation():
         return next_site
 
 
-def final_time(log_file):
-    final_time = 0
+def final_time(log_files: list):
+    max_time = 0
     if comm.Get_rank() == 0:
         # Find the final time
-        with open(log_file) as fh:
-            for line in fh:
-                pass
-            final_time = float(line.split()[0])    
-    final_time = comm.bcast(final_time, root=0)
-    return final_time
+        for log_file in log_files:
+            with open(log_file) as fh:
+                for line in fh:
+                    pass
+                final_time = float(line.split()[0])    
+            if final_time > max_time:
+                max_time = final_time
+    max_time = comm.bcast(max_time, root=0)
+    return max_time
 
 
 def work_calculation(log_files: list):
