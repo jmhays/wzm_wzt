@@ -83,6 +83,16 @@ class gmxapiConfig(MetaData):
         plugins_fixed = {}
         phases = []
 
+        # Have to check whether any phases are in training or convergence.
+        # If so, we have to set the production time really high just in case
+        # there are any linear restraints.
+        production_time = None
+        for name in names:
+            phase = all_pair_params[name].get("phase")
+            if phase == 'training' or phase == 'convergence':
+                production_time = 10E8  # ten microseconds
+                break
+
         # First add the production plugins to all members of the simulation.
         for name in names:
             pair_parameters = all_pair_params[name]
@@ -95,6 +105,13 @@ class gmxapiConfig(MetaData):
                     plugin = ProductionPluginConfig()
                     plugin.scan_metadata(self.state.general_params)
                     plugin.scan_metadata(self.state.pair_params[name])
+
+                    if production_time is not None:
+                        logging.getLogger("WZM-WZT").info(
+                            "Some of your plugins are in the training phase. That means I have to set the variable \"production_time\" arbitrarily high. Setting to {} ps"
+                            .format(production_time))
+                        plugin.set_parameters(production_time=production_time)
+
                     assert not plugin.get_missing_keys()
 
                     plugins_fixed[name] = plugin.build_plugin()
