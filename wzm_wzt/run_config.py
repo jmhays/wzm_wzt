@@ -83,6 +83,12 @@ class gmxapiConfig(MetaData):
         plugins_fixed = {}
         phases = []
 
+        # Check whether any plugins are training or convergence. Then we have to send a stop signal in the production plugins
+        send_stop_signal = False
+        phases = [all_pair_params[name].get("phase") for name in names]
+        if "training" in phases or "convergence" in phases:
+            send_stop_signal = True
+
         # First add the production plugins to all members of the simulation.
         for name in names:
             pair_parameters = all_pair_params[name]
@@ -95,6 +101,7 @@ class gmxapiConfig(MetaData):
                     plugin = ProductionPluginConfig()
                     plugin.scan_metadata(self.state.general_params)
                     plugin.scan_metadata(self.state.pair_params[name])
+                    plugin.set_parameters(send_stop_signal=send_stop_signal)
                     assert not plugin.get_missing_keys()
 
                     plugins_fixed[name] = plugin.build_plugin()
