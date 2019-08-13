@@ -218,6 +218,9 @@ class Simulation():
         self.gmxapi.set(num_test_sites=len(test_sites))
         if self.gmxapi.get("num_test_sites") == 0:
             self.gmxapi.state.set(iteration=self.gmxapi.state.get("iteration") + 1)
+            for name in self.gmxapi.state.names:
+                self.gmxapi.state.set(on=True, testing=True, phase="training", site_name=name)
+
         #TODO: don't store the test sites in two places!!
         self.gmxapi.set(test_sites=test_sites)
         self.gmxapi.state.set(test_sites=test_sites)
