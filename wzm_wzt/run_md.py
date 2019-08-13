@@ -220,7 +220,8 @@ class Simulation():
             self.gmxapi.state.set(iteration=self.gmxapi.state.get("iteration") + 1)
             for name in self.gmxapi.state.names:
                 self.gmxapi.state.set(on=True, testing=True, phase="training", site_name=name)
-
+                test_sites.append(name)
+                
         #TODO: don't store the test sites in two places!!
         self.gmxapi.set(test_sites=test_sites)
         self.gmxapi.state.set(test_sites=test_sites)
